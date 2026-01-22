@@ -207,6 +207,93 @@ router.get('/api-keys', authenticateAdmin, async (req, res) => {
 
     let result
     let costSortStatus = null
+    const trimmedSearch = typeof search === 'string' ? search.trim() : ''
+
+    if (searchMode === 'fullKey' && trimmedSearch) {
+      const hashedKey = apiKeyService._hashApiKey(trimmedSearch)
+      const rawKeyData = await redis.findApiKeyByHash(hashedKey)
+      let matchedKeys = []
+
+      if (rawKeyData) {
+        const parsedKeyData = redis._parseApiKeyData(rawKeyData)
+
+        if (parsedKeyData && !parsedKeyData.isDeleted) {
+          let matches = true
+
+          if (isActive !== '' && isActive !== undefined && isActive !== null) {
+            const activeValue = isActive === 'true' || isActive === true
+            matches = parsedKeyData.isActive === activeValue
+          }
+
+          if (matches && tag) {
+            const tags = Array.isArray(parsedKeyData.tags) ? parsedKeyData.tags : []
+            matches = tags.includes(tag)
+          }
+
+          if (matches && modelFilter.length > 0) {
+            const keyIdsWithModels = await redis.getKeyIdsWithModels(
+              [parsedKeyData.id],
+              modelFilter
+            )
+            matches = keyIdsWithModels.has(parsedKeyData.id)
+          }
+
+          if (matches) {
+            matchedKeys = [parsedKeyData]
+          }
+        }
+      }
+
+      const total = matchedKeys.length
+      const totalPages = Math.ceil(total / pageSizeNum) || 1
+      const validPage = Math.min(Math.max(1, pageNum), totalPages)
+      const start = (validPage - 1) * pageSizeNum
+      const items = matchedKeys.slice(start, start + pageSizeNum)
+
+      const allTags = new Set()
+      for (const key of matchedKeys) {
+        const tags = Array.isArray(key.tags) ? key.tags : []
+        tags.forEach((t) => allTags.add(t))
+      }
+
+      for (const apiKey of items) {
+        if (apiKey.userId) {
+          try {
+            const user = await userService.getUserById(apiKey.userId, false)
+            if (user) {
+              apiKey.ownerDisplayName = user.displayName || user.username || 'Unknown User'
+            } else {
+              apiKey.ownerDisplayName = 'Unknown User'
+            }
+          } catch (error) {
+            logger.debug(`无法获取用户 ${apiKey.userId} 的信息`, error)
+            apiKey.ownerDisplayName = 'Unknown User'
+          }
+        } else {
+          apiKey.ownerDisplayName =
+            apiKey.createdBy === 'admin' ? 'Admin' : apiKey.createdBy || 'Admin'
+        }
+
+        if (!apiKey.usage) {
+          apiKey.usage = { total: { requests: 0, tokens: 0, cost: 0, formattedCost: '$0.00' } }
+        }
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          items,
+          pagination: {
+            page: validPage,
+            pageSize: pageSizeNum,
+            total,
+            totalPages
+          },
+          availableTags: [...allTags].sort()
+        },
+        timeRange
+      })
+    }
 
     // 如果是费用排序
     if (validSortBy === 'cost') {

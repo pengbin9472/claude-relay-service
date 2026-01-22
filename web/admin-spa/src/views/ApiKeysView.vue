@@ -158,13 +158,7 @@
                     <input
                       v-model="searchKeyword"
                       class="h-10 w-full rounded-lg border border-gray-200 bg-white px-3 pl-9 text-sm text-gray-700 placeholder-gray-400 shadow-sm transition-all duration-200 hover:border-gray-300 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:placeholder-gray-500 dark:hover:border-gray-500"
-                      :placeholder="
-                        searchMode === 'bindingAccount'
-                          ? '搜索所属账号...'
-                          : isLdapEnabled
-                            ? '搜索名称或所有者...'
-                            : '搜索名称...'
-                      "
+                      :placeholder="searchPlaceholder"
                       type="text"
                     />
                     <i class="fas fa-search absolute left-3 text-sm text-cyan-500" />
@@ -2252,8 +2246,22 @@ const searchKeyword = ref('')
 const searchMode = ref('apiKey')
 const searchModeOptions = computed(() => [
   { value: 'apiKey', label: '按Key名称', icon: 'fa-key' },
+  { value: 'fullKey', label: '按Key值', icon: 'fa-fingerprint' },
   { value: 'bindingAccount', label: '按所属账号', icon: 'fa-id-badge' }
 ])
+
+const searchPlaceholder = computed(() => {
+  if (searchMode.value === 'fullKey') {
+    return '输入完整Key值...'
+  }
+  if (searchMode.value === 'bindingAccount') {
+    return '搜索所属账号...'
+  }
+  if (isLdapEnabled.value) {
+    return '搜索名称或所有者...'
+  }
+  return '搜索名称...'
+})
 
 const tagOptions = computed(() => {
   const options = [{ value: '', label: '所有标签', icon: 'fa-asterisk' }]
