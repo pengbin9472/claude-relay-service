@@ -1,0 +1,6 @@
+❌ [2026-01-22 10:11:35] ERROR: ❌ Redis connection error: connect ECONNREFUSED 127.0.0.1:6379 | {"errno":-4078,"code":"ECONNREFUSED","syscall":"connect","address":"127.0.0.1","port":6379}
+Error: connect ECONNREFUSED 127.0.0.1:6379
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1610:16)
+❌ [2026-01-22 10:16:46] ERROR: ❌ Redis connection error: connect ECONNREFUSED 127.0.0.1:6379 | {"errno":-4078,"code":"ECONNREFUSED","syscall":"connect","address":"127.0.0.1","port":6379}
+Error: connect ECONNREFUSED 127.0.0.1:6379
+    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1610:16)

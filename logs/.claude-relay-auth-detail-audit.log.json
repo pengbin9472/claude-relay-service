@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": false,
+        "amount": 5
+    },
+    "auditLog": "D:\\claude-relay-service\\logs\\.claude-relay-auth-detail-audit.log.json",
+    "files": [
+        {
+            "date": 1769047871045,
+            "name": "D:\\claude-relay-service\\logs\\claude-relay-auth-detail-2026-01-22.log",
+            "hash": "4aa812660a1d3b2f7ee3b20f7125fb916453c39e355ebe248359af696ce39a5d"
+        }
+    ],
+    "hashType": "sha256"
+}
