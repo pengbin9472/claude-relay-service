@@ -43,7 +43,7 @@ jobs:
           BUILD_DATE=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 
           TEMP_DIR=$(mktemp -d)
-          cp -r web/admin-spa/dist/* "$TEMP_DIR/"
+          cp -a web/admin-spa/dist/. "$TEMP_DIR/"
 
           git fetch origin web-dist:web-dist || true
 
@@ -54,7 +54,7 @@ jobs:
           fi
 
           git rm -rf . 2>/dev/null || true
-          cp -r "$TEMP_DIR"/* .
+          cp -a "$TEMP_DIR/." .
 
           cat > README.md << EOF
           # Claude Relay Service - Web Frontend Build

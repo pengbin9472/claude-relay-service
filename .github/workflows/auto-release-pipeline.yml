@@ -181,7 +181,7 @@ jobs:
         echo "Using temp directory: $TEMP_DIR"
         
         # 复制构建产物到临时目录
-        cp -r web/admin-spa/dist/* "$TEMP_DIR/"
+        cp -a web/admin-spa/dist/. "$TEMP_DIR/"
         
         # 检查 web-dist 分支是否存在
         if git ls-remote --heads origin web-dist | grep -q web-dist; then
@@ -197,7 +197,7 @@ jobs:
         git rm -rf . 2>/dev/null || true
         
         # 复制构建产物
-        cp -r "$TEMP_DIR"/* .
+        cp -a "$TEMP_DIR/." .
         
         # 添加 README
         cat > README.md << EOF
