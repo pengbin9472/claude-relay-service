@@ -12,6 +12,59 @@
       </p>
     </div>
 
+    <!-- 售后 & 进群 展示区域 -->
+    <div
+      class="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 shadow-sm dark:border-gray-700 dark:from-gray-800 dark:to-gray-900 sm:mb-8"
+    >
+      <div class="flex flex-col gap-4 p-4 sm:flex-row sm:gap-6 sm:p-6">
+        <!-- 左侧：二维码 -->
+        <div class="flex shrink-0 items-center justify-center sm:justify-start">
+          <div
+            class="overflow-hidden rounded-xl border-2 border-gray-200 bg-white p-3 shadow-sm dark:border-gray-600 dark:bg-gray-700"
+          >
+            <img
+              alt="微信二维码"
+              class="h-32 w-32 sm:h-40 sm:w-40"
+              src="@/assets/images/wechat-qr.png"
+            />
+          </div>
+        </div>
+
+        <!-- 右侧：文字说明 -->
+        <div class="flex flex-1 flex-col justify-center">
+          <div class="mb-3 flex items-center gap-2 sm:mb-4">
+            <i class="fab fa-weixin text-2xl text-green-500 sm:text-3xl" />
+            <h4 class="text-lg font-bold text-gray-900 dark:text-gray-100 sm:text-xl">
+              售后 & 进群
+            </h4>
+          </div>
+
+          <p class="mb-3 text-sm text-gray-700 dark:text-gray-300 sm:mb-4 sm:text-base">
+            扫码添加微信：
+          </p>
+
+          <ul class="space-y-2 text-sm text-gray-600 dark:text-gray-400 sm:text-base">
+            <li class="flex items-start gap-2">
+              <i class="fas fa-check-circle mt-0.5 text-green-500" />
+              <span>售后咨询</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fas fa-check-circle mt-0.5 text-green-500" />
+              <span>续费服务</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fas fa-check-circle mt-0.5 text-green-500" />
+              <span>加入用户群</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fas fa-check-circle mt-0.5 text-green-500" />
+              <span>远程配置</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
     <!-- 系统选择标签 -->
     <div class="mb-4 sm:mb-8">
       <div class="flex flex-wrap gap-1 rounded-xl bg-gray-100 p-1 dark:bg-gray-800 sm:gap-2 sm:p-2">
