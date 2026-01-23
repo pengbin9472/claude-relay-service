@@ -262,6 +262,20 @@ jobs:
       if: steps.check.outputs.needs_bump == 'true'
       run: |
         NEW_TAG="${{ steps.next_version.outputs.new_tag }}"
+
+        # 检查远程 tag 是否已存在，如果存在则删除
+        if git ls-remote --tags origin | grep -q "refs/tags/$NEW_TAG$"; then
+          echo "Tag $NEW_TAG already exists on remote, deleting..."
+          git push origin --delete "$NEW_TAG" || true
+        fi
+
+        # 检查本地 tag 是否已存在，如果存在则删除
+        if git tag -l | grep -q "^$NEW_TAG$"; then
+          echo "Tag $NEW_TAG already exists locally, deleting..."
+          git tag -d "$NEW_TAG" || true
+        fi
+
+        # 创建并推送新 tag
         git tag -a "$NEW_TAG" -m "Release $NEW_TAG"
         git push origin HEAD:main "$NEW_TAG"
 
