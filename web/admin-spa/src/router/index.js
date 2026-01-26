@@ -17,6 +17,7 @@ const AccountUsageRecordsView = () => import('@/views/AccountUsageRecordsView.vu
 const TutorialView = () => import('@/views/TutorialView.vue')
 const SettingsView = () => import('@/views/SettingsView.vue')
 const ApiStatsView = () => import('@/views/ApiStatsView.vue')
+const RedemptionCodesView = () => import('@/views/RedemptionCodesView.vue')
 
 const routes = [
   {
@@ -156,6 +157,18 @@ const routes = [
         path: '',
         name: 'UserManagement',
         component: UserManagementView
+      }
+    ]
+  },
+  {
+    path: '/redemption-codes',
+    component: MainLayout,
+    meta: { requiresAuth: true },
+    children: [
+      {
+        path: '',
+        name: 'RedemptionCodes',
+        component: RedemptionCodesView
       }
     ]
   },

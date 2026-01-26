@@ -57,6 +57,13 @@
             <span class="text-sm md:text-base">统计查询</span>
           </button>
           <button
+            :class="['tab-pill-button', currentTab === 'redeem' ? 'active' : '']"
+            @click="currentTab = 'redeem'"
+          >
+            <i class="fas fa-ticket-alt mr-1 md:mr-2" />
+            <span class="text-sm md:text-base">兑换额度</span>
+          </button>
+          <button
             :class="['tab-pill-button', currentTab === 'tutorial' ? 'active' : '']"
             @click="currentTab = 'tutorial'"
           >
@@ -158,6 +165,79 @@
       </div>
     </div>
 
+    <!-- 兑换额度内容 -->
+    <div v-if="currentTab === 'redeem'" class="tab-content">
+      <div class="glass-strong rounded-3xl p-4 shadow-xl md:p-6">
+        <div class="mx-auto max-w-md">
+          <h2 class="mb-6 text-center text-xl font-bold text-gray-900 dark:text-white">
+            <i class="fas fa-ticket-alt mr-2 text-blue-500"></i>
+            兑换额度
+          </h2>
+
+          <form @submit.prevent="handleRedeem">
+            <!-- ��换码输入 -->
+            <div class="mb-4">
+              <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                兑换码
+              </label>
+              <input
+                v-model="redeemForm.code"
+                class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                placeholder="请输入兑换码"
+                required
+                type="text"
+              />
+            </div>
+
+            <!-- API Key 输入 -->
+            <div class="mb-6">
+              <label class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                API Key
+              </label>
+              <input
+                v-model="redeemForm.apiKey"
+                class="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                placeholder="请输入您的 API Key"
+                required
+                type="text"
+              />
+            </div>
+
+            <!-- 提交按钮 -->
+            <button
+              class="btn btn-primary btn-query w-full"
+              :disabled="redeemLoading"
+              type="submit"
+            >
+              <i v-if="redeemLoading" class="fas fa-spinner fa-spin mr-2"></i>
+              <i v-else class="fas fa-gift mr-2"></i>
+              兑换
+            </button>
+          </form>
+
+          <!-- 兑换结果 -->
+          <div
+            v-if="redeemResult"
+            class="mt-6 rounded-lg border p-4"
+            :class="
+              redeemResult.success
+                ? 'border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-300'
+                : 'border-red-500/30 bg-red-500/10 text-red-700 dark:text-red-300'
+            "
+          >
+            <div class="flex items-center gap-2">
+              <i :class="redeemResult.success ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+              <span>{{ redeemResult.message }}</span>
+            </div>
+            <div v-if="redeemResult.success && redeemResult.data" class="mt-2 text-sm">
+              <p>增加额度: ${{ redeemResult.data.amount.toFixed(2) }}</p>
+              <p>当前总额度: ${{ redeemResult.data.newTotalLimit.toFixed(2) }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- API Key 测试弹窗 -->
     <ApiKeyTestModal
       :api-key-name="statsData?.name || ''"
@@ -212,6 +292,59 @@ const { queryStats, switchPeriod, loadStatsWithApiId, loadOemSettings, reset } =
 
 // 测试弹窗状态
 const showTestModal = ref(false)
+
+// 兑换相关
+const redeemForm = ref({
+  code: '',
+  apiKey: ''
+})
+const redeemLoading = ref(false)
+const redeemResult = ref(null)
+
+// 兑换处理
+const handleRedeem = async () => {
+  if (!redeemForm.value.code || !redeemForm.value.apiKey) {
+    redeemResult.value = { success: false, message: '请填写兑换码和 API Key' }
+    return
+  }
+
+  redeemLoading.value = true
+  redeemResult.value = null
+
+  try {
+    const response = await fetch('/api/v1/redeem', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code: redeemForm.value.code,
+        apiKey: redeemForm.value.apiKey
+      })
+    })
+
+    const data = await response.json()
+
+    if (data.success) {
+      redeemResult.value = {
+        success: true,
+        message: '兑换成功！',
+        data: data.data
+      }
+      redeemForm.value.code = ''
+    } else {
+      redeemResult.value = {
+        success: false,
+        message: data.message || '兑换失败'
+      }
+    }
+  } catch (err) {
+    redeemResult.value = {
+      success: false,
+      message: '网络错误，请稍后重试'
+    }
+  } finally {
+    redeemLoading.value = false
+  }
+}
 
 // 打开测试弹窗
 const openTestModal = () => {
@@ -571,6 +704,44 @@ watch(apiKey, (newValue) => {
 
 .test-btn:disabled {
   opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 兑换按钮使用与查询按钮一致的风格 */
+.btn {
+  font-weight: 500;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.025em;
+}
+
+.btn-query {
+  padding: 14px 24px;
+  font-size: 16px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow:
+    0 10px 15px -3px rgba(102, 126, 234, 0.3),
+    0 4px 6px -2px rgba(102, 126, 234, 0.05);
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 20px 25px -5px rgba(102, 126, 234, 0.3),
+    0 10px 10px -5px rgba(102, 126, 234, 0.1);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }

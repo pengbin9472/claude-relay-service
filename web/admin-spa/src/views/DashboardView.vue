@@ -917,7 +917,6 @@ const loadBalanceSummary = async () => {
       balanceSummaryUpdatedAt.value = new Date().toISOString()
     }
   } catch (error) {
-    console.debug('加载余额汇总失败:', error)
     showToast('加载余额汇总失败', 'error')
   } finally {
     loadingBalanceSummary.value = false
