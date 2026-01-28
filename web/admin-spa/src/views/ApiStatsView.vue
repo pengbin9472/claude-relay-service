@@ -443,7 +443,7 @@
                       <span v-if="record.quotaAdded">额度 +${{ record.quotaAdded }}</span>
                       <span v-if="record.quotaAdded && record.timeAdded"> · </span>
                       <span v-if="record.timeAdded"
-                        >有效期 +{{ record.timeAmount
+                        >有效期 +{{ record.timeAdded
                         }}{{
                           record.timeUnit === 'days'
                             ? '天'
@@ -642,7 +642,7 @@ const loadRedemptionHistory = async () => {
   historyLoading.value = false
 
   if (res.success) {
-    redemptionHistory.value = res.data?.records || res.data || []
+    redemptionHistory.value = res.data?.redemptions || res.data?.records || res.data || []
   }
 }
 
