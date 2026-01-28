@@ -1734,52 +1734,5 @@ router.post('/api/event_logging/batch', (req, res) => {
   res.status(200).json({ success: true })
 })
 
-// 兑换码兑换端点（公开，无需管理员认证）
-const redemptionCodeService = require('../services/redemptionCodeService')
-
-const REDEMPTION_ERROR_MESSAGES = {
-  INVALID_CODE: '兑换码无效',
-  CODE_EXPIRED: '兑换码已过期',
-  CODE_DISABLED: '兑换码已禁用',
-  CODE_EXHAUSTED: '兑换码已用完',
-  INVALID_API_KEY: 'API Key无效',
-  RATE_LIMITED: '请求过于频繁，请稍后再试',
-  ALREADY_REDEEMED: '此API Key已使用过该兑换码'
-}
-
-router.post('/v1/redeem', async (req, res) => {
-  try {
-    const { code, apiKey } = req.body
-
-    if (!code || !apiKey) {
-      return res.status(400).json({
-        success: false,
-        error: 'MISSING_PARAMS',
-        message: '请提供兑换码和API Key'
-      })
-    }
-
-    const clientIp = req.ip || req.headers['x-forwarded-for'] || 'unknown'
-    const result = await redemptionCodeService.redeemCode(code, apiKey, { ip: clientIp })
-
-    res.json({
-      success: true,
-      message: '兑换成功',
-      data: result
-    })
-  } catch (error) {
-    const errorCode = error.message
-    const errorMessage = REDEMPTION_ERROR_MESSAGES[errorCode] || error.message
-
-    logger.warn(`兑换失败: ${errorCode} - ${errorMessage}`)
-
-    res.status(400).json({
-      success: false,
-      error: errorCode,
-      message: errorMessage
-    })
-  }
-})
-
 module.exports = router
 module.exports.handleMessagesRequest = handleMessagesRequest

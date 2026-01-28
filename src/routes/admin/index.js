@@ -26,7 +26,6 @@ const systemRoutes = require('./system')
 const concurrencyRoutes = require('./concurrency')
 const claudeRelayConfigRoutes = require('./claudeRelayConfig')
 const syncRoutes = require('./sync')
-const redemptionCodesRoutes = require('./redemptionCodes')
 const serviceRatesRoutes = require('./serviceRates')
 const quotaCardsRoutes = require('./quotaCards')
 
@@ -55,6 +54,5 @@ router.use('/ccr-accounts', ccrAccountsRoutes)
 router.use('/bedrock-accounts', bedrockAccountsRoutes)
 router.use('/gemini-accounts', geminiAccountsRoutes)
 router.use('/openai-accounts', openaiAccountsRoutes)
-router.use('/redemption-codes', redemptionCodesRoutes)
 
 module.exports = router

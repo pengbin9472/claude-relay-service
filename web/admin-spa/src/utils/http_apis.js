@@ -246,9 +246,6 @@ export const getQuotaCardsWithParamsApi = (params) =>
   request({ url: '/admin/quota-cards', method: 'GET', params })
 export const getQuotaCardsStatsApi = () =>
   request({ url: '/admin/quota-cards/stats', method: 'GET' })
-export const getRedemptionsApi = () => request({ url: '/admin/redemptions', method: 'GET' })
-export const revokeRedemptionApi = (id, data) =>
-  request({ url: `/admin/redemptions/${id}/revoke`, method: 'POST', data })
 export const getQuotaCardLimitsApi = () =>
   request({ url: '/admin/quota-cards/limits', method: 'GET' })
 export const updateQuotaCardLimitsApi = (data) =>
