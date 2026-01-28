@@ -250,6 +250,10 @@ export const getQuotaCardLimitsApi = () =>
   request({ url: '/admin/quota-cards/limits', method: 'GET' })
 export const updateQuotaCardLimitsApi = (data) =>
   request({ url: '/admin/quota-cards/limits', method: 'PUT', data })
+export const getRedemptionsApi = (params) =>
+  request({ url: '/admin/redemptions', method: 'GET', params })
+export const revokeRedemptionApi = (id, data) =>
+  request({ url: `/admin/redemptions/${id}/revoke`, method: 'POST', data })
 
 // 账户余额
 export const getAccountBalanceApi = (id, params) =>
