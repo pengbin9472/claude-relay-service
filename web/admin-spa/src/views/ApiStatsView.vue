@@ -18,7 +18,7 @@
                 ? '额度卡'
                 : '使用教程'
           "
-          :title="oemSettings.siteName"
+          :title="oemSettings.siteName + ' · 售后 & 进群加V：ohhhhhhhhb'"
         />
         <div class="flex items-center gap-2 md:gap-4">
           <!-- 主题切换按钮 -->
@@ -60,6 +60,15 @@
         <div
           class="inline-flex w-full max-w-2xl flex-wrap justify-center gap-1 rounded-full border border-white/20 bg-white/10 p-1 shadow-lg backdrop-blur-xl sm:w-auto sm:flex-nowrap"
         >
+          <a
+            class="tab-pill-button"
+            href="https://m.tb.cn/h.7NlAqnG?tk=Cl7QUfpgv8c"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <i class="fas fa-store mr-1 md:mr-2" />
+            <span class="text-sm md:text-base">闲鱼店铺</span>
+          </a>
           <button
             :class="['tab-pill-button', currentTab === 'stats' ? 'active' : '']"
             @click="currentTab = 'stats'"
