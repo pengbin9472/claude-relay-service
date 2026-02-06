@@ -210,13 +210,25 @@ async function sendStreamTestRequest(options) {
             continue
           }
 
+          // 打印原始 SSE 数据
+          logger.info(`🔍 [Test] Raw SSE data: ${jsonStr.substring(0, 500)}`)
+
           try {
             const data = JSON.parse(jsonStr)
 
+            // 打印解析后的事件类型
+            logger.info(`🔍 [Test] Event type: ${data.type}`)
+
             // 捕获 message_start 中的模型信息
-            if (data.type === 'message_start' && data.message?.model) {
-              responseModel = data.message.model
-              sendSSE('model_info', { model: responseModel })
+            if (data.type === 'message_start') {
+              logger.info(`🔍 [Test] message_start full data: ${JSON.stringify(data)}`)
+              if (data.message?.model) {
+                responseModel = data.message.model
+                logger.info(`📡 [Test] Response model: ${responseModel}`)
+                sendSSE('model_info', { model: responseModel })
+              } else {
+                logger.warn(`⚠️ [Test] message_start has no model field`)
+              }
             }
 
             if (data.type === 'content_block_delta' && data.delta?.text) {
@@ -236,6 +248,7 @@ async function sendStreamTestRequest(options) {
       })
 
       response.data.on('end', () => {
+        logger.info(`🔍 [Test] Stream ended, responseModel: ${responseModel}`)
         if (!responseStream.destroyed && !responseStream.writableEnded) {
           endTest(true, null, responseModel)
         }
