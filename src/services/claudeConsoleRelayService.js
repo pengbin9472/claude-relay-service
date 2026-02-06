@@ -1389,7 +1389,7 @@ class ClaudeConsoleRelayService {
   }
 
   // 🧪 测试账号连接（供Admin API使用）
-  async testAccountConnection(accountId, responseStream) {
+  async testAccountConnection(accountId, responseStream, model = 'claude-sonnet-4-5-20250929') {
     const { sendStreamTestRequest } = require('../utils/testPayloadHelper')
 
     try {
@@ -1398,7 +1398,9 @@ class ClaudeConsoleRelayService {
         throw new Error('Account not found')
       }
 
-      logger.info(`🧪 Testing Claude Console account connection: ${account.name} (${accountId})`)
+      logger.info(
+        `🧪 Testing Claude Console account connection: ${account.name} (${accountId}), model: ${model}`
+      )
 
       const cleanUrl = account.apiUrl.replace(/\/$/, '')
       const apiUrl = cleanUrl.endsWith('/v1/messages')
@@ -1410,7 +1412,8 @@ class ClaudeConsoleRelayService {
         authorization: `Bearer ${account.apiKey}`,
         responseStream,
         proxyAgent: claudeConsoleAccountService._createProxyAgent(account.proxy),
-        extraHeaders: account.userAgent ? { 'User-Agent': account.userAgent } : {}
+        extraHeaders: account.userAgent ? { 'User-Agent': account.userAgent } : {},
+        model
       })
     } catch (error) {
       logger.error(`❌ Test account connection failed:`, error)

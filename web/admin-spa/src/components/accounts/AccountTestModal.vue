@@ -94,6 +94,19 @@
                 <option v-for="m in availableModels" :key="m" :value="m">{{ m }}</option>
               </select>
             </div>
+            <div v-if="responseModel" class="flex items-center justify-between text-sm">
+              <span class="text-gray-500 dark:text-gray-400">响应模型</span>
+              <span
+                :class="[
+                  'rounded-lg px-2 py-1 text-xs font-medium',
+                  responseModel !== selectedModel
+                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                    : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                ]"
+              >
+                {{ responseModel }}
+              </span>
+            </div>
           </div>
 
           <!-- 状态指示 -->
@@ -222,6 +235,7 @@ const testDuration = ref(0)
 const testStartTime = ref(null)
 const eventSource = ref(null)
 const selectedModel = ref('')
+const responseModel = ref('') // API 响应中返回的实际模型
 
 // 可用模型列表 - 根据账户类型
 const availableModels = computed(() => {
@@ -499,6 +513,7 @@ async function startTest() {
   testStatus.value = 'testing'
   responseText.value = ''
   errorMessage.value = ''
+  responseModel.value = ''
   testDuration.value = 0
   testStartTime.value = Date.now()
 
@@ -586,14 +601,26 @@ function handleSSEEvent(data) {
     case 'test_start':
       // 测试开始
       break
+    case 'model_info':
+      // 收到响应模型信息
+      if (data.model) {
+        responseModel.value = data.model
+      }
+      break
     case 'content':
       responseText.value += data.text
       break
     case 'message_stop':
-      // 消息结束
+      // 消息结束，也可能包含模型信息
+      if (data.model) {
+        responseModel.value = data.model
+      }
       break
     case 'test_complete':
       testDuration.value = Date.now() - testStartTime.value
+      if (data.model) {
+        responseModel.value = data.model
+      }
       if (data.success) {
         testStatus.value = 'success'
       } else {

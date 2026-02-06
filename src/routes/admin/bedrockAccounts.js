@@ -355,8 +355,9 @@ router.put('/:accountId/toggle-schedulable', authenticateAdmin, async (req, res)
 router.post('/:accountId/test', authenticateAdmin, async (req, res) => {
   try {
     const { accountId } = req.params
+    const { model } = req.body
 
-    await bedrockAccountService.testAccountConnection(accountId, res)
+    await bedrockAccountService.testAccountConnection(accountId, res, model)
   } catch (error) {
     logger.error('❌ Failed to test Bedrock account:', error)
     // 错误已在服务层处理，这里仅做日志记录

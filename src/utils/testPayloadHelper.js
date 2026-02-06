@@ -89,11 +89,15 @@ async function sendStreamTestRequest(options) {
     apiUrl,
     authorization,
     responseStream,
-    payload = createClaudeTestPayload('claude-sonnet-4-5-20250929', { stream: true }),
+    payload,
+    model = 'claude-sonnet-4-5-20250929',
     proxyAgent = null,
     timeout = 30000,
     extraHeaders = {}
   } = options
+
+  // 如果没有传入 payload，则使用 model 参数生成
+  const requestPayload = payload || createClaudeTestPayload(model, { stream: true })
 
   const sendSSE = (type, data = {}) => {
     if (!responseStream.destroyed && !responseStream.writableEnded) {
@@ -105,12 +109,17 @@ async function sendStreamTestRequest(options) {
     }
   }
 
-  const endTest = (success, error = null) => {
+  const endTest = (success, errorMsg = null, responseModelName = null) => {
     if (!responseStream.destroyed && !responseStream.writableEnded) {
       try {
-        responseStream.write(
-          `data: ${JSON.stringify({ type: 'test_complete', success, error: error || undefined })}\n\n`
-        )
+        const endPayload = { type: 'test_complete', success }
+        if (errorMsg) {
+          endPayload.error = errorMsg
+        }
+        if (responseModelName) {
+          endPayload.model = responseModelName
+        }
+        responseStream.write(`data: ${JSON.stringify(endPayload)}\n\n`)
         responseStream.end()
       } catch {
         // ignore
@@ -133,7 +142,7 @@ async function sendStreamTestRequest(options) {
   const requestConfig = {
     method: 'POST',
     url: apiUrl,
-    data: payload,
+    data: requestPayload,
     headers: {
       'Content-Type': 'application/json',
       'anthropic-version': '2023-06-01',
@@ -185,6 +194,7 @@ async function sendStreamTestRequest(options) {
     // 处理成功的流式响应
     return new Promise((resolve) => {
       let buffer = ''
+      let responseModel = null
 
       response.data.on('data', (chunk) => {
         buffer += chunk.toString()
@@ -203,11 +213,17 @@ async function sendStreamTestRequest(options) {
           try {
             const data = JSON.parse(jsonStr)
 
+            // 捕获 message_start 中的模型信息
+            if (data.type === 'message_start' && data.message?.model) {
+              responseModel = data.message.model
+              sendSSE('model_info', { model: responseModel })
+            }
+
             if (data.type === 'content_block_delta' && data.delta?.text) {
               sendSSE('content', { text: data.delta.text })
             }
             if (data.type === 'message_stop') {
-              sendSSE('message_stop')
+              sendSSE('message_stop', { model: responseModel })
             }
             if (data.type === 'error' || data.error) {
               const errMsg = data.error?.message || data.message || data.error || 'Unknown error'
@@ -221,7 +237,7 @@ async function sendStreamTestRequest(options) {
 
       response.data.on('end', () => {
         if (!responseStream.destroyed && !responseStream.writableEnded) {
-          endTest(true)
+          endTest(true, null, responseModel)
         }
         resolve()
       })
