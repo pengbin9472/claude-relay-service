@@ -38,7 +38,24 @@ const MODEL_PRICING = {
     cacheRead: 1.5
   },
 
-  // Claude Opus 4.1 (新模型)
+  // Claude Opus 4.6 (最新模型) - ≤200K tokens 定价
+  // >200K tokens: input=$10, output=$37.50, cacheWrite=$12.50, cacheRead=$1.0
+  'claude-opus-4-6': {
+    input: 5.0,
+    output: 25.0,
+    cacheWrite: 6.25,
+    cacheRead: 0.5
+  },
+
+  // Claude Opus 4.5
+  'claude-opus-4-5-20251101': {
+    input: 15.0,
+    output: 75.0,
+    cacheWrite: 18.75,
+    cacheRead: 1.5
+  },
+
+  // Claude Opus 4.1
   'claude-opus-4-1-20250805': {
     input: 15.0,
     output: 75.0,
@@ -69,6 +86,14 @@ const MODEL_PRICING = {
     cacheWrite: 3.75,
     cacheRead: 0.3
   }
+}
+
+// Claude Opus 4.6 长上下文定价 (>200K tokens)
+const OPUS_46_LONG_CONTEXT_PRICING = {
+  input: 10.0,
+  output: 37.5,
+  cacheWrite: 12.5,
+  cacheRead: 1.0
 }
 
 class CostCalculator {
@@ -142,6 +167,11 @@ class CostCalculator {
     const cacheCreateTokens = usage.cache_creation_input_tokens || 0
     const cacheReadTokens = usage.cache_read_input_tokens || 0
 
+    // 检查是否为 Opus 4.6 且总输入超过 200K tokens
+    const isOpus46 = model && model.toLowerCase().includes('opus-4-6')
+    const totalInputTokens = inputTokens + cacheCreateTokens + cacheReadTokens
+    const isLongContext = isOpus46 && totalInputTokens > 200000
+
     // 优先使用动态价格服务
     const pricingData = pricingService.getModelPricing(model)
     let pricing
@@ -179,6 +209,11 @@ class CostCalculator {
       pricing = MODEL_PRICING[model] || MODEL_PRICING['unknown']
     }
 
+    // Opus 4.6 长上下文定价覆盖
+    if (isLongContext) {
+      pricing = OPUS_46_LONG_CONTEXT_PRICING
+    }
+
     // 计算各类型token的费用 (USD)
     const inputCost = (inputTokens / 1000000) * pricing.input
     const outputCost = (outputTokens / 1000000) * pricing.output
@@ -191,12 +226,14 @@ class CostCalculator {
       model,
       pricing,
       usingDynamicPricing,
+      isLongContext, // Opus 4.6 长上下文标志
       usage: {
         inputTokens,
         outputTokens,
         cacheCreateTokens,
         cacheReadTokens,
-        totalTokens: inputTokens + outputTokens + cacheCreateTokens + cacheReadTokens
+        totalTokens: inputTokens + outputTokens + cacheCreateTokens + cacheReadTokens,
+        totalInputTokens // 用于调试
       },
       costs: {
         input: inputCost,
@@ -218,7 +255,10 @@ class CostCalculator {
         isOpenAIModel: model.includes('gpt') || model.includes('o1'),
         hasCacheCreatePrice: !!pricingData?.cache_creation_input_token_cost,
         cacheCreateTokens,
-        cacheWritePriceUsed: pricing.cacheWrite
+        cacheWritePriceUsed: pricing.cacheWrite,
+        isOpus46,
+        isLongContext,
+        totalInputTokens
       }
     }
   }
