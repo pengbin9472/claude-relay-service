@@ -17,7 +17,7 @@ const { getSafeMessage } = require('../utils/errorSanitizer')
 const sessionHelper = require('../utils/sessionHelper')
 const { updateRateLimitCounters } = require('../utils/rateLimitHelper')
 const pricingService = require('../services/pricingService')
-const { getEffectiveModel } = require('../utils/modelHelper')
+const { getEffectiveModel, isOpus46OrNewer } = require('../utils/modelHelper')
 
 // 🔧 辅助函数：检查 API Key 权限
 function checkPermissions(apiKeyData, requiredPermission = 'claude') {
@@ -334,6 +334,11 @@ async function handleChatCompletion(req, res, apiKeyData) {
         )
       } else {
         // Claude Official 账户使用标准转发服务
+        // 根据模型版本决定 beta header
+        const betaHeader = isOpus46OrNewer(claudeRequest.model)
+          ? 'oauth-2025-04-20,claude-code-20250219'
+          : 'oauth-2025-04-20,claude-code-20250219,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14'
+
         await claudeRelayService.relayStreamRequestWithUsageCapture(
           claudeRequest,
           apiKeyData,
@@ -342,8 +347,7 @@ async function handleChatCompletion(req, res, apiKeyData) {
           usageCallback,
           streamTransformer,
           {
-            betaHeader:
-              'oauth-2025-04-20,claude-code-20250219,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14'
+            betaHeader
           }
         )
       }

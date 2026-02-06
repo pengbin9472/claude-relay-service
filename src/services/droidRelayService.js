@@ -8,6 +8,7 @@ const redis = require('../models/redis')
 const { updateRateLimitCounters } = require('../utils/rateLimitHelper')
 const logger = require('../utils/logger')
 const runtimeAddon = require('../utils/runtimeAddon')
+const { isOpus46OrNewer } = require('../utils/modelHelper')
 
 const SYSTEM_PROMPT = 'You are Droid, an AI software engineering agent built by Factory.'
 const RUNTIME_EVENT_FMT_PAYLOAD = 'fmtPayload'
@@ -1010,7 +1011,8 @@ class DroidRelayService {
       headers['x-api-key'] = 'placeholder'
       headers['x-api-provider'] = 'anthropic'
 
-      if (this._isThinkingRequested(requestBody)) {
+      // Opus 4.6+ 不需要 interleaved-thinking beta header（自适应思考��动启用）
+      if (this._isThinkingRequested(requestBody) && !isOpus46OrNewer(requestBody?.model)) {
         headers['anthropic-beta'] = 'interleaved-thinking-2025-05-14'
       }
     }

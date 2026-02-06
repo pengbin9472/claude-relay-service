@@ -21,6 +21,7 @@ const {
   getHttpsAgentForNonStream,
   getPricingData
 } = require('../utils/performanceOptimizer')
+const { isOpus46OrNewer } = require('../utils/modelHelper')
 
 // structuredClone polyfill for Node < 17
 const safeClone =
@@ -49,9 +50,19 @@ class ClaudeRelayService {
     const TOOL_STREAMING_BETA = 'fine-grained-tool-streaming-2025-05-14'
 
     const isHaikuModel = modelId && modelId.toLowerCase().includes('haiku')
-    const baseBetas = isHaikuModel
-      ? [OAUTH_BETA, INTERLEAVED_THINKING_BETA]
-      : [CLAUDE_CODE_BETA, OAUTH_BETA, INTERLEAVED_THINKING_BETA, TOOL_STREAMING_BETA]
+    const isOpus46Plus = isOpus46OrNewer(modelId)
+
+    // Opus 4.6+ 变更：
+    // - interleaved-thinking-2025-05-14 已弃用（自适应思考自动启用）
+    // - fine-grained-tool-streaming-2025-05-14 已正式发布（无需 beta header）
+    let baseBetas
+    if (isOpus46Plus) {
+      baseBetas = [CLAUDE_CODE_BETA, OAUTH_BETA]
+    } else if (isHaikuModel) {
+      baseBetas = [OAUTH_BETA, INTERLEAVED_THINKING_BETA]
+    } else {
+      baseBetas = [CLAUDE_CODE_BETA, OAUTH_BETA, INTERLEAVED_THINKING_BETA, TOOL_STREAMING_BETA]
+    }
 
     const betaList = []
     const seen = new Set()

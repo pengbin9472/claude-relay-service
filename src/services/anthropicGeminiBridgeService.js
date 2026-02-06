@@ -1306,10 +1306,17 @@ function buildGeminiRequestFromAnthropic(
 
   // 提前判断是否可以启用 thinking，以便决定是否需要剥离 thinking blocks
   let canEnableThinking = false
-  if (vendor === 'antigravity' && body?.thinking?.type === 'enabled') {
-    const budgetRaw = Number(body.thinking.budget_tokens)
-    if (Number.isFinite(budgetRaw)) {
+  const thinkingType = body?.thinking?.type
+  // 支持 Opus 4.6+ 的 adaptive thinking 和旧版的 enabled thinking
+  if (vendor === 'antigravity' && (thinkingType === 'enabled' || thinkingType === 'adaptive')) {
+    if (thinkingType === 'adaptive') {
+      // adaptive thinking 总是可以启用
       canEnableThinking = canEnableAntigravityThinking(normalizedMessages)
+    } else {
+      const budgetRaw = Number(body.thinking.budget_tokens)
+      if (Number.isFinite(budgetRaw)) {
+        canEnableThinking = canEnableAntigravityThinking(normalizedMessages)
+      }
     }
   }
 
@@ -1349,19 +1356,37 @@ function buildGeminiRequestFromAnthropic(
   }
 
   // 使用前面已经计算好的 canEnableThinking 结果
-  if (vendor === 'antigravity' && body?.thinking?.type === 'enabled') {
-    const budgetRaw = Number(body.thinking.budget_tokens)
-    if (Number.isFinite(budgetRaw)) {
+  const thinkingType = body?.thinking?.type
+  if (vendor === 'antigravity' && (thinkingType === 'enabled' || thinkingType === 'adaptive')) {
+    if (thinkingType === 'adaptive') {
+      // Opus 4.6+ adaptive thinking: 动态决定是否思考和思考量
+      // 映射到 Gemini 的 thinking 配置，使用较大的默认 budget 让模型自行决定
       if (canEnableThinking) {
         generationConfig.thinkingConfig = {
-          thinkingBudget: Math.trunc(budgetRaw),
+          thinkingBudget: 10000, // adaptive 模式使用较大默认值
           include_thoughts: true
         }
       } else {
         logger.warn(
-          '⚠️ Antigravity thinking request dropped: last assistant message lacks usable thinking block',
+          '⚠️ Antigravity adaptive thinking request dropped: last assistant message lacks usable thinking block',
           { model: baseModel }
         )
+      }
+    } else {
+      // 旧版 enabled thinking with budget_tokens
+      const budgetRaw = Number(body.thinking.budget_tokens)
+      if (Number.isFinite(budgetRaw)) {
+        if (canEnableThinking) {
+          generationConfig.thinkingConfig = {
+            thinkingBudget: Math.trunc(budgetRaw),
+            include_thoughts: true
+          }
+        } else {
+          logger.warn(
+            '⚠️ Antigravity thinking request dropped: last assistant message lacks usable thinking block',
+            { model: baseModel }
+          )
+        }
       }
     }
   }
@@ -3048,10 +3073,16 @@ async function handleAnthropicCountTokensToGemini(req, res, { vendor }) {
   const toolUseIdToName = buildToolUseIdToNameMap(normalizedMessages || [])
 
   let canEnableThinking = false
-  if (vendor === 'antigravity' && req.body?.thinking?.type === 'enabled') {
-    const budgetRaw = Number(req.body.thinking.budget_tokens)
-    if (Number.isFinite(budgetRaw)) {
+  const thinkingType = req.body?.thinking?.type
+  // 支持 Opus 4.6+ 的 adaptive thinking 和旧版��� enabled thinking
+  if (vendor === 'antigravity' && (thinkingType === 'enabled' || thinkingType === 'adaptive')) {
+    if (thinkingType === 'adaptive') {
       canEnableThinking = canEnableAntigravityThinking(normalizedMessages)
+    } else {
+      const budgetRaw = Number(req.body.thinking.budget_tokens)
+      if (Number.isFinite(budgetRaw)) {
+        canEnableThinking = canEnableAntigravityThinking(normalizedMessages)
+      }
     }
   }
 

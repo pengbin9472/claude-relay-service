@@ -189,6 +189,83 @@ function isOpus45OrNewer(modelName) {
 }
 
 /**
+ * Check if the model is Opus 4.6 or newer.
+ *
+ * VERSION LOGIC (as of 2026-02):
+ * - Opus 4.6+ (including 5.0, 6.0, etc.) → returns true
+ * - Opus 4.5 and below → returns false
+ *
+ * This is used for API compatibility:
+ * - Opus 4.6+ doesn't need interleaved-thinking beta header (auto-enabled with adaptive thinking)
+ * - Opus 4.6+ uses adaptive thinking instead of budget_tokens
+ *
+ * @param {string} modelName - Model name
+ * @returns {boolean} - Whether the model is Opus 4.6 or newer
+ */
+function isOpus46OrNewer(modelName) {
+  if (!modelName) {
+    return false
+  }
+
+  const lowerModel = modelName.toLowerCase()
+  if (!lowerModel.includes('opus')) {
+    return false
+  }
+
+  // Handle 'latest' special case
+  if (lowerModel.includes('opus-latest') || lowerModel.includes('opus_latest')) {
+    return true
+  }
+
+  // Old format: claude-{version}-opus (version before opus)
+  const oldFormatMatch = lowerModel.match(/claude[- ](\d+)(?:[.-](\d+))?[- ]opus/)
+  if (oldFormatMatch) {
+    const majorVersion = parseInt(oldFormatMatch[1], 10)
+    const minorVersion = oldFormatMatch[2] ? parseInt(oldFormatMatch[2], 10) : 0
+    if (majorVersion > 4) {
+      return true
+    }
+    if (majorVersion === 4 && minorVersion >= 6) {
+      return true
+    }
+    return false
+  }
+
+  // New format 1: opus-{major}.{minor} (dot-separated)
+  const dotFormatMatch = lowerModel.match(/opus[- ]?(\d+)\.(\d+)/)
+  if (dotFormatMatch) {
+    const majorVersion = parseInt(dotFormatMatch[1], 10)
+    const minorVersion = parseInt(dotFormatMatch[2], 10)
+    if (majorVersion > 4) {
+      return true
+    }
+    if (majorVersion === 4 && minorVersion >= 6) {
+      return true
+    }
+    return false
+  }
+
+  // New format 2: opus-{major}[-{minor}][-date] (hyphen-separated)
+  const opusIndex = lowerModel.indexOf('opus')
+  const afterOpus = lowerModel.substring(opusIndex + 4)
+  const versionMatch = afterOpus.match(/^[- ](\d+)(?:[- ](\d{1,2})(?=[- ]\d{8}|$))?/)
+
+  if (versionMatch) {
+    const majorVersion = parseInt(versionMatch[1], 10)
+    const minorVersion = versionMatch[2] ? parseInt(versionMatch[2], 10) : 0
+    if (majorVersion > 4) {
+      return true
+    }
+    if (majorVersion === 4 && minorVersion >= 6) {
+      return true
+    }
+    return false
+  }
+
+  return false
+}
+
+/**
  * 判断某个 model 名称是否属于 Anthropic Claude 系列模型。
  *
  * 用于 API Key 维度的限额/统计（Claude 周费用）。这里刻意覆盖以下命名：
@@ -237,5 +314,6 @@ module.exports = {
   getEffectiveModel,
   getVendorType,
   isOpus45OrNewer,
+  isOpus46OrNewer,
   isClaudeFamilyModel
 }

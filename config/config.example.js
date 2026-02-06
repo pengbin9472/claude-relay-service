@@ -44,6 +44,8 @@ const config = {
   claude: {
     apiUrl: process.env.CLAUDE_API_URL || 'https://api.anthropic.com/v1/messages',
     apiVersion: process.env.CLAUDE_API_VERSION || '2023-06-01',
+    // 注意：Opus 4.6+ 不需要 interleaved-thinking 和 fine-grained-tool-streaming（已正式发布）
+    // 代码会根据模型版本自动调整，此配置用于旧模型的默认值
     betaHeader:
       process.env.CLAUDE_BETA_HEADER ||
       'claude-code-20250219,oauth-2025-04-20,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14',
