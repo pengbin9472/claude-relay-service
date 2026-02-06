@@ -1356,7 +1356,6 @@ function buildGeminiRequestFromAnthropic(
   }
 
   // 使用前面已经计算好的 canEnableThinking 结果
-  const thinkingType = body?.thinking?.type
   if (vendor === 'antigravity' && (thinkingType === 'enabled' || thinkingType === 'adaptive')) {
     if (thinkingType === 'adaptive') {
       // Opus 4.6+ adaptive thinking: 动态决定是否思考和思考量
