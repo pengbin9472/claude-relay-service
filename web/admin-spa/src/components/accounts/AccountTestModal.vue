@@ -228,13 +228,23 @@ const availableModels = computed(() => {
   if (!props.account) return []
   const platform = props.account.platform
   const modelLists = {
-    claude: ['claude-sonnet-4-5-20250929', 'claude-sonnet-4-20250514', 'claude-3-5-haiku-20241022'],
+    claude: [
+      'claude-opus-4-6',
+      'claude-opus-4-5-20251101',
+      'claude-sonnet-4-5-20250929',
+      'claude-sonnet-4-20250514',
+      'claude-3-5-haiku-20241022'
+    ],
     'claude-console': [
+      'claude-opus-4-6',
+      'claude-opus-4-5-20251101',
       'claude-sonnet-4-5-20250929',
       'claude-sonnet-4-20250514',
       'claude-3-5-haiku-20241022'
     ],
     bedrock: [
+      'claude-opus-4-6',
+      'claude-opus-4-5-20251101',
       'claude-sonnet-4-5-20250929',
       'claude-sonnet-4-20250514',
       'claude-3-5-haiku-20241022'
