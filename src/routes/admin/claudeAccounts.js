@@ -898,10 +898,15 @@ router.put(
 // 测试Claude OAuth账户连通性（流式响应）- 复用 claudeRelayService
 router.post('/claude-accounts/:accountId/test', authenticateAdmin, async (req, res) => {
   const { accountId } = req.params
+  const { model = 'claude-sonnet-4-5-20250929' } = req.body || {}
 
   try {
+    if (typeof model !== 'string' || model.trim().length === 0 || model.length > 256) {
+      return res.status(400).json({ error: 'Invalid model parameter' })
+    }
+
     // 直接调用服务层的测试方法
-    await claudeRelayService.testAccountConnection(accountId, res)
+    await claudeRelayService.testAccountConnection(accountId, res, model.trim())
   } catch (error) {
     logger.error(`❌ Failed to test Claude OAuth account:`, error)
     // 错误已在服务层处理，这里仅做日志记录

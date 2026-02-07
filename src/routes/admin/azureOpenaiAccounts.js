@@ -460,6 +460,7 @@ router.post('/azure-openai-accounts/:accountId/test', authenticateAdmin, async (
 
     const response = await axios.post(apiUrl, payload, requestConfig)
     const latency = Date.now() - startTime
+    const actualModel = response.data?.model || deploymentName
 
     // 提取响应文本
     let responseText = ''
@@ -477,6 +478,8 @@ router.post('/azure-openai-accounts/:accountId/test', authenticateAdmin, async (
         accountId,
         accountName: account.name,
         model: deploymentName,
+        requestedModel: deploymentName,
+        actualModel,
         latency,
         responseText: responseText.substring(0, 200)
       }

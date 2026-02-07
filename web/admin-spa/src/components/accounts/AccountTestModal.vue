@@ -94,6 +94,18 @@
                 <option v-for="m in availableModels" :key="m" :value="m">{{ m }}</option>
               </select>
             </div>
+            <div
+              v-if="actualModel && testStatus !== 'idle'"
+              class="flex items-center justify-between gap-3 text-sm"
+            >
+              <span class="text-gray-500 dark:text-gray-400">实际返回模型</span>
+              <span
+                class="max-w-[70%] truncate text-right font-medium text-gray-700 dark:text-gray-300"
+                :title="actualModel"
+              >
+                {{ actualModel }}
+              </span>
+            </div>
           </div>
 
           <!-- 状态指示 -->
@@ -222,14 +234,21 @@ const testDuration = ref(0)
 const testStartTime = ref(null)
 const eventSource = ref(null)
 const selectedModel = ref('')
+const actualModel = ref('')
 
 // 可用模型列表 - 根据账户类型
 const availableModels = computed(() => {
   if (!props.account) return []
   const platform = props.account.platform
   const modelLists = {
-    claude: ['claude-sonnet-4-5-20250929', 'claude-sonnet-4-20250514', 'claude-3-5-haiku-20241022'],
+    claude: [
+      'claude-opus-4-6',
+      'claude-sonnet-4-5-20250929',
+      'claude-sonnet-4-20250514',
+      'claude-3-5-haiku-20241022'
+    ],
     'claude-console': [
+      'claude-opus-4-6',
       'claude-sonnet-4-5-20250929',
       'claude-sonnet-4-20250514',
       'claude-3-5-haiku-20241022'
@@ -242,8 +261,8 @@ const availableModels = computed(() => {
     gemini: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-2.0-flash'],
     'openai-responses': ['gpt-4o-mini', 'gpt-4o', 'o3-mini'],
     'azure-openai': [props.account.deploymentName || 'gpt-4o-mini'],
-    droid: ['claude-sonnet-4-20250514', 'claude-3-5-haiku-20241022'],
-    ccr: ['claude-sonnet-4-20250514', 'claude-3-5-haiku-20241022']
+    droid: ['claude-opus-4-6', 'claude-sonnet-4-20250514', 'claude-3-5-haiku-20241022'],
+    ccr: ['claude-opus-4-6', 'claude-sonnet-4-20250514', 'claude-3-5-haiku-20241022']
   }
   return modelLists[platform] || []
 })
@@ -277,7 +296,7 @@ watch(
 // 是否使用 SSE 流式响应
 const useSSE = computed(() => {
   if (!props.account) return false
-  return ['claude', 'claude-console'].includes(props.account.platform)
+  return ['claude', 'claude-console', 'bedrock'].includes(props.account.platform)
 })
 
 // 计算属性
@@ -489,6 +508,7 @@ async function startTest() {
   testStatus.value = 'testing'
   responseText.value = ''
   errorMessage.value = ''
+  actualModel.value = ''
   testDuration.value = 0
   testStartTime.value = Date.now()
 
@@ -559,6 +579,7 @@ async function startTest() {
       if (data.success) {
         testStatus.value = 'success'
         responseText.value = data.data?.responseText || 'Test passed'
+        actualModel.value = data.data?.actualModel || data.data?.model || selectedModel.value
       } else {
         testStatus.value = 'error'
         errorMessage.value = data.message || 'Test failed'
@@ -574,7 +595,15 @@ async function startTest() {
 function handleSSEEvent(data) {
   switch (data.type) {
     case 'test_start':
+      if (data.actualModel || data.model) {
+        actualModel.value = data.actualModel || data.model
+      }
       // 测试开始
+      break
+    case 'model':
+      if (data.model) {
+        actualModel.value = data.model
+      }
       break
     case 'content':
       responseText.value += data.text
@@ -584,6 +613,9 @@ function handleSSEEvent(data) {
       break
     case 'test_complete':
       testDuration.value = Date.now() - testStartTime.value
+      if (data.actualModel || data.model) {
+        actualModel.value = data.actualModel || data.model
+      }
       if (data.success) {
         testStatus.value = 'success'
       } else {
@@ -594,6 +626,9 @@ function handleSSEEvent(data) {
     case 'error':
       testStatus.value = 'error'
       errorMessage.value = data.error || '未知错误'
+      if (data.actualModel || data.model) {
+        actualModel.value = data.actualModel || data.model
+      }
       testDuration.value = Date.now() - testStartTime.value
       break
   }
@@ -612,6 +647,7 @@ function handleClose() {
   testStatus.value = 'idle'
   responseText.value = ''
   errorMessage.value = ''
+  actualModel.value = ''
   testDuration.value = 0
 
   emit('close')
@@ -625,6 +661,7 @@ watch(
       testStatus.value = 'idle'
       responseText.value = ''
       errorMessage.value = ''
+      actualModel.value = ''
       testDuration.value = 0
 
       // 根据平台和账号类型设置测试模型
@@ -639,7 +676,7 @@ watch(
         }
       } else {
         // 其他平台使用默认模型
-        selectedModel.value = 'claude-sonnet-4-5-20250929'
+        selectedModel.value = defaultModel.value
       }
     }
   }

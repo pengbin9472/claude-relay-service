@@ -2861,6 +2861,7 @@ class ClaudeRelayService {
   // 🧪 创建测试用的流转换器，将 Claude API SSE 格式转换为前端期望的格式
   _createTestStreamTransformer() {
     let testStartSent = false
+    let actualModel = null
 
     return (rawData) => {
       const lines = rawData.split('\n')
@@ -2884,10 +2885,23 @@ class ClaudeRelayService {
           const data = JSON.parse(jsonStr)
 
           // 发送 test_start 事件（只在第一次 message_start 时发送）
-          if (data.type === 'message_start' && !testStartSent) {
-            testStartSent = true
-            outputLines.push(`data: ${JSON.stringify({ type: 'test_start' })}`)
-            outputLines.push('')
+          if (data.type === 'message_start') {
+            if (data.message?.model) {
+              actualModel = data.message.model
+              outputLines.push(`data: ${JSON.stringify({ type: 'model', model: actualModel })}`)
+              outputLines.push('')
+            }
+
+            if (!testStartSent) {
+              testStartSent = true
+              outputLines.push(
+                `data: ${JSON.stringify({
+                  type: 'test_start',
+                  actualModel: actualModel || undefined
+                })}`
+              )
+              outputLines.push('')
+            }
           }
 
           // 转换 content_block_delta 为 content
@@ -2898,7 +2912,13 @@ class ClaudeRelayService {
 
           // 转换 message_stop 为 test_complete
           if (data.type === 'message_stop') {
-            outputLines.push(`data: ${JSON.stringify({ type: 'test_complete', success: true })}`)
+            outputLines.push(
+              `data: ${JSON.stringify({
+                type: 'test_complete',
+                success: true,
+                actualModel: actualModel || undefined
+              })}`
+            )
             outputLines.push('')
           }
 

@@ -557,6 +557,7 @@ router.post('/:accountId/test', authenticateAdmin, async (req, res) => {
 
     const response = await axios.post(apiUrl, payload, requestConfig)
     const latency = Date.now() - startTime
+    const actualModel = response.data?.model || response.data?.modelVersion || model
 
     // 提取响应文本
     let responseText = ''
@@ -574,6 +575,8 @@ router.post('/:accountId/test', authenticateAdmin, async (req, res) => {
         accountId,
         accountName: account.name,
         model,
+        requestedModel: model,
+        actualModel,
         latency,
         responseText: responseText.substring(0, 200)
       }

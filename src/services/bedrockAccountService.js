@@ -547,7 +547,8 @@ class BedrockAccountService {
       res.status(200)
 
       // 发送 test_start 事件
-      res.write(`data: ${JSON.stringify({ type: 'test_start' })}\n\n`)
+      res.write(`data: ${JSON.stringify({ type: 'test_start', actualModel: model })}\n\n`)
+      res.write(`data: ${JSON.stringify({ type: 'model', model })}\n\n`)
 
       // 构造测试请求体（Bedrock 格式）
       const bedrockPayload = {
@@ -608,7 +609,9 @@ class BedrockAccountService {
       res.write(`data: ${JSON.stringify({ type: 'message_stop' })}\n\n`)
 
       // 发送 test_complete 事件
-      res.write(`data: ${JSON.stringify({ type: 'test_complete', success: true })}\n\n`)
+      res.write(
+        `data: ${JSON.stringify({ type: 'test_complete', success: true, actualModel: model })}\n\n`
+      )
 
       // 结束响应
       res.end()
@@ -628,7 +631,9 @@ class BedrockAccountService {
             res.status(200)
           }
           const errorMsg = error.message || '测试失败'
-          res.write(`data: ${JSON.stringify({ type: 'error', error: errorMsg })}\n\n`)
+          res.write(
+            `data: ${JSON.stringify({ type: 'error', error: errorMsg, actualModel: model })}\n\n`
+          )
           res.end()
         }
       } catch (writeError) {

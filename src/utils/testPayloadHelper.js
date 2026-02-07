@@ -105,11 +105,16 @@ async function sendStreamTestRequest(options) {
     }
   }
 
-  const endTest = (success, error = null) => {
+  const endTest = (success, error = null, extraData = {}) => {
     if (!responseStream.destroyed && !responseStream.writableEnded) {
       try {
         responseStream.write(
-          `data: ${JSON.stringify({ type: 'test_complete', success, error: error || undefined })}\n\n`
+          `data: ${JSON.stringify({
+            type: 'test_complete',
+            success,
+            error: error || undefined,
+            ...extraData
+          })}\n\n`
         )
         responseStream.end()
       } catch {
@@ -185,6 +190,7 @@ async function sendStreamTestRequest(options) {
     // 处理成功的流式响应
     return new Promise((resolve) => {
       let buffer = ''
+      let actualModel = null
 
       response.data.on('data', (chunk) => {
         buffer += chunk.toString()
@@ -203,11 +209,15 @@ async function sendStreamTestRequest(options) {
           try {
             const data = JSON.parse(jsonStr)
 
+            if (data.type === 'message_start' && data.message?.model) {
+              actualModel = data.message.model
+              sendSSE('model', { model: actualModel })
+            }
             if (data.type === 'content_block_delta' && data.delta?.text) {
               sendSSE('content', { text: data.delta.text })
             }
             if (data.type === 'message_stop') {
-              sendSSE('message_stop')
+              sendSSE('message_stop', { actualModel: actualModel || undefined })
             }
             if (data.type === 'error' || data.error) {
               const errMsg = data.error?.message || data.message || data.error || 'Unknown error'
@@ -221,7 +231,7 @@ async function sendStreamTestRequest(options) {
 
       response.data.on('end', () => {
         if (!responseStream.destroyed && !responseStream.writableEnded) {
-          endTest(true)
+          endTest(true, null, { actualModel: actualModel || payload.model || undefined })
         }
         resolve()
       })
