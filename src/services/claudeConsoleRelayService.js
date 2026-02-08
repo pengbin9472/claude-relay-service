@@ -12,6 +12,7 @@ const {
 const userMessageQueueService = require('./userMessageQueueService')
 const { isStreamWritable } = require('../utils/streamHelper')
 const { filterForClaude } = require('../utils/headerFilter')
+const claudeCodeHeadersService = require('./claudeCodeHeadersService')
 
 class ClaudeConsoleRelayService {
   constructor() {
@@ -228,6 +229,27 @@ class ClaudeConsoleRelayService {
         timeout: config.requestTimeout || 600000,
         signal: abortController.signal,
         validateStatus: () => true // 接受所有状态码
+      }
+
+      // 🔧 Claude Code 请求头伪装
+      const isRealClaudeCode = this._isClaudeCodeUserAgent(clientHeaders)
+      if (!isRealClaudeCode) {
+        const claudeCodeHeaders = await claudeCodeHeadersService.getAccountHeaders(accountId)
+        Object.keys(claudeCodeHeaders).forEach((key) => {
+          requestConfig.headers[key] = claudeCodeHeaders[key]
+        })
+        // 账户自定义 User-Agent 优先级最高
+        if (account.userAgent) {
+          requestConfig.headers['User-Agent'] = account.userAgent
+        }
+        logger.debug(`🔧 [Console] Injected Claude Code headers for non-Claude-Code client`)
+      } else {
+        // 真实 Claude Code 客户端，存储其请求头供后续使用
+        if (clientHeaders && Object.keys(clientHeaders).length > 0) {
+          claudeCodeHeadersService.storeAccountHeaders(accountId, clientHeaders).catch((err) => {
+            logger.error(`❌ Failed to store Claude Code headers:`, err.message)
+          })
+        }
       }
 
       if (proxyAgent) {
@@ -730,6 +752,17 @@ class ClaudeConsoleRelayService {
     requestOptions = {},
     onResponseHeaderReceived = null
   ) {
+    // 🔧 预获取 Claude Code 请求头（在 Promise 外部处理异步）
+    const isRealClaudeCode = this._isClaudeCodeUserAgent(clientHeaders)
+    let claudeCodeHeaders = null
+    if (!isRealClaudeCode) {
+      claudeCodeHeaders = await claudeCodeHeadersService.getAccountHeaders(accountId)
+    } else if (clientHeaders && Object.keys(clientHeaders).length > 0) {
+      claudeCodeHeadersService.storeAccountHeaders(accountId, clientHeaders).catch((err) => {
+        logger.error(`❌ Failed to store Claude Code headers:`, err.message)
+      })
+    }
+
     return new Promise((resolve, reject) => {
       let aborted = false
 
@@ -764,6 +797,18 @@ class ClaudeConsoleRelayService {
         timeout: config.requestTimeout || 600000,
         responseType: 'stream',
         validateStatus: () => true // 接受所有状态码
+      }
+
+      // 🔧 注入 Claude Code 请求头伪装
+      if (claudeCodeHeaders) {
+        Object.keys(claudeCodeHeaders).forEach((key) => {
+          requestConfig.headers[key] = claudeCodeHeaders[key]
+        })
+        // 账户自定义 User-Agent 优先级最高
+        if (account.userAgent) {
+          requestConfig.headers['User-Agent'] = account.userAgent
+        }
+        logger.debug(`🔧 [Console Stream] Injected Claude Code headers for non-Claude-Code client`)
       }
 
       if (proxyAgent) {
@@ -1301,6 +1346,12 @@ class ClaudeConsoleRelayService {
     })
   }
 
+  // 🔍 检测是否为真实的 Claude Code 客户端
+  _isClaudeCodeUserAgent(clientHeaders) {
+    const userAgent = clientHeaders?.['user-agent'] || clientHeaders?.['User-Agent']
+    return typeof userAgent === 'string' && /^claude-cli\/[^\s]+\s+\(/i.test(userAgent)
+  }
+
   // 🔧 过滤客户端请求头
   _filterClientHeaders(clientHeaders) {
     // 使用统一的 headerFilter 工具类（白名单模式）
@@ -1398,7 +1449,9 @@ class ClaudeConsoleRelayService {
         throw new Error('Account not found')
       }
 
-      logger.info(`🧪 Testing Claude Console account connection: ${account.name} (${accountId})`)
+      logger.info(
+        `🧪 Testing Claude Console account connection: ${account.name} (${accountId}), requested model: ${model}`
+      )
 
       const cleanUrl = account.apiUrl.replace(/\/$/, '')
       const apiUrl = cleanUrl.endsWith('/v1/messages')
