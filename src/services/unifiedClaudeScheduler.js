@@ -1068,6 +1068,14 @@ class UnifiedClaudeScheduler {
           return false
         }
 
+        // 检查是否临时不可用（5xx错误）
+        if (await this.isAccountTemporarilyUnavailable(accountId, 'claude-console')) {
+          logger.info(
+            `⏱️ Claude Console account ${accountId} is temporarily unavailable (session check)`
+          )
+          return false
+        }
+
         // 检查并发限制（预检查，真正的原子抢占在 relayService 中进行）
         if (account.maxConcurrentTasks > 0) {
           const currentConcurrency = await redis.getConsoleAccountConcurrency(accountId)

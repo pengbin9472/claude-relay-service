@@ -12,6 +12,8 @@ const {
 const userMessageQueueService = require('./userMessageQueueService')
 const { isStreamWritable } = require('../utils/streamHelper')
 const { filterForClaude } = require('../utils/headerFilter')
+const unifiedClaudeScheduler = require('./unifiedClaudeScheduler')
+const sessionHelper = require('../utils/sessionHelper')
 
 class ClaudeConsoleRelayService {
   constructor() {
@@ -364,6 +366,28 @@ class ClaudeConsoleRelayService {
         )
         if (!autoProtectionDisabled) {
           await claudeConsoleAccountService.markAccountOverloaded(accountId)
+        }
+      } else if (response.status === 403) {
+        logger.warn(
+          `🚫 Forbidden error (403) detected for Claude Console account ${accountId}${autoProtectionDisabled ? ' (auto-protection disabled, skipping status change)' : ''}`
+        )
+        if (!autoProtectionDisabled) {
+          const errorDetails =
+            typeof response.data === 'string' ? response.data : JSON.stringify(response.data)
+          await claudeConsoleAccountService.markConsoleAccountBlocked(accountId, errorDetails)
+        }
+      } else if (response.status >= 500 && response.status < 600) {
+        logger.warn(
+          `🔥 Server error (${response.status}) detected for Claude Console account ${accountId}${autoProtectionDisabled ? ' (auto-protection disabled, skipping status change)' : ''}`
+        )
+        if (!autoProtectionDisabled) {
+          const sessionHash = sessionHelper.generateSessionHash(requestBody)
+          await unifiedClaudeScheduler.markAccountTemporarilyUnavailable(
+            accountId,
+            'claude-console',
+            sessionHash,
+            300
+          )
         }
       } else if (response.status === 200 || response.status === 201) {
         // 如果请求成功，检查并移除错误状态
@@ -862,6 +886,29 @@ class ClaudeConsoleRelayService {
                 if (!autoProtectionDisabled) {
                   await claudeConsoleAccountService.markAccountOverloaded(accountId)
                 }
+              } else if (response.status === 403) {
+                logger.warn(
+                  `🚫 [Stream] Forbidden error (403) detected for Claude Console account ${accountId}${autoProtectionDisabled ? ' (auto-protection disabled, skipping status change)' : ''}`
+                )
+                if (!autoProtectionDisabled) {
+                  await claudeConsoleAccountService.markConsoleAccountBlocked(
+                    accountId,
+                    errorDataForCheck
+                  )
+                }
+              } else if (response.status >= 500 && response.status < 600) {
+                logger.warn(
+                  `🔥 [Stream] Server error (${response.status}) detected for Claude Console account ${accountId}${autoProtectionDisabled ? ' (auto-protection disabled, skipping status change)' : ''}`
+                )
+                if (!autoProtectionDisabled) {
+                  const sessionHash = sessionHelper.generateSessionHash(body)
+                  await unifiedClaudeScheduler.markAccountTemporarilyUnavailable(
+                    accountId,
+                    'claude-console',
+                    sessionHash,
+                    300
+                  )
+                }
               }
 
               // 设置响应头
@@ -1256,6 +1303,16 @@ class ClaudeConsoleRelayService {
               })
             } else if (error.response.status === 529) {
               claudeConsoleAccountService.markAccountOverloaded(accountId)
+            } else if (error.response.status === 403) {
+              claudeConsoleAccountService.markConsoleAccountBlocked(accountId)
+            } else if (error.response.status >= 500 && error.response.status < 600) {
+              const sessionHash = sessionHelper.generateSessionHash(body)
+              unifiedClaudeScheduler.markAccountTemporarilyUnavailable(
+                accountId,
+                'claude-console',
+                sessionHash,
+                300
+              )
             }
           }
 
