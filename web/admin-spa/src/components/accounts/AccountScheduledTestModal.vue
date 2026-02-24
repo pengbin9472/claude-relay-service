@@ -240,15 +240,6 @@ const cronPresets = [
   { label: '工作日 9:00', value: '0 9 * * 1-5' }
 ]
 
-<<<<<<< HEAD
-// 模型选项
-const modelOptions = [
-  { label: 'Claude Opus 4.6', value: 'claude-opus-4-6' },
-  { label: 'Claude Sonnet 4.5', value: 'claude-sonnet-4-5-20250929' },
-  { label: 'Claude Haiku 4.5', value: 'claude-haiku-4-5-20251001' },
-  { label: 'Claude Opus 4.5', value: 'claude-opus-4-5-20251101' }
-]
-=======
 // 模型选项（从 API 动态获取）
 const modelOptions = ref([])
 
@@ -261,7 +252,6 @@ const loadModels = async () => {
 }
 
 onMounted(loadModels)
->>>>>>> upstream/main
 
 // 格式化时间戳
 function formatTimestamp(timestamp) {
