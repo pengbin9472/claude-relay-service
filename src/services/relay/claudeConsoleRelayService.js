@@ -8,20 +8,11 @@ const {
   sanitizeUpstreamError,
   sanitizeErrorMessage,
   isAccountDisabledError
-<<<<<<< HEAD:src/services/claudeConsoleRelayService.js
-} = require('../utils/errorSanitizer')
-const userMessageQueueService = require('./userMessageQueueService')
-const { isStreamWritable } = require('../utils/streamHelper')
-const { filterForClaude } = require('../utils/headerFilter')
-const unifiedClaudeScheduler = require('./unifiedClaudeScheduler')
-const sessionHelper = require('../utils/sessionHelper')
-=======
 } = require('../../utils/errorSanitizer')
 const upstreamErrorHelper = require('../../utils/upstreamErrorHelper')
 const userMessageQueueService = require('../userMessageQueueService')
 const { isStreamWritable } = require('../../utils/streamHelper')
 const { filterForClaude } = require('../../utils/headerFilter')
->>>>>>> upstream/main:src/services/relay/claudeConsoleRelayService.js
 
 class ClaudeConsoleRelayService {
   constructor() {
@@ -1370,26 +1361,12 @@ class ClaudeConsoleRelayService {
                   .catch(() => {})
               }
             } else if (error.response.status === 529) {
-<<<<<<< HEAD:src/services/claudeConsoleRelayService.js
-              claudeConsoleAccountService.markAccountOverloaded(accountId)
-            } else if (error.response.status === 403) {
-              claudeConsoleAccountService.markConsoleAccountBlocked(accountId)
-            } else if (error.response.status >= 500 && error.response.status < 600) {
-              const sessionHash = sessionHelper.generateSessionHash(body)
-              unifiedClaudeScheduler.markAccountTemporarilyUnavailable(
-                accountId,
-                'claude-console',
-                sessionHash,
-                300
-              )
-=======
               if (!catchAutoProtectionDisabled) {
                 claudeConsoleAccountService.markAccountOverloaded(accountId)
                 upstreamErrorHelper
                   .markTempUnavailable(accountId, 'claude-console', 529)
                   .catch(() => {})
               }
->>>>>>> upstream/main:src/services/relay/claudeConsoleRelayService.js
             }
           }
 
@@ -1523,13 +1500,8 @@ class ClaudeConsoleRelayService {
   }
 
   // 🧪 测试账号连接（供Admin API使用）
-<<<<<<< HEAD:src/services/claudeConsoleRelayService.js
-  async testAccountConnection(accountId, responseStream, model = 'claude-sonnet-4-5-20250929') {
-    const { createClaudeTestPayload, sendStreamTestRequest } = require('../utils/testPayloadHelper')
-=======
   async testAccountConnection(accountId, responseStream) {
     const { sendStreamTestRequest } = require('../../utils/testPayloadHelper')
->>>>>>> upstream/main:src/services/relay/claudeConsoleRelayService.js
 
     try {
       const account = await claudeConsoleAccountService.getAccount(accountId)
