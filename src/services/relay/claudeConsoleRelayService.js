@@ -1501,7 +1501,7 @@ class ClaudeConsoleRelayService {
 
   // 🧪 测试账号连接（供Admin API使用）
   async testAccountConnection(accountId, responseStream) {
-    const { sendStreamTestRequest } = require('../../utils/testPayloadHelper')
+    const { sendStreamTestRequest, createClaudeTestPayload } = require('../../utils/testPayloadHelper')
 
     try {
       const account = await claudeConsoleAccountService.getAccount(accountId)
