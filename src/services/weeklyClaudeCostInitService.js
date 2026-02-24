@@ -4,6 +4,10 @@ const pricingService = require('./pricingService')
 const serviceRatesService = require('./serviceRatesService')
 const { isClaudeFamilyModel } = require('../utils/modelHelper')
 
+function isOpusModel(model) {
+  return typeof model === 'string' && model.toLowerCase().includes('opus')
+}
+
 function pad2(n) {
   return String(n).padStart(2, '0')
 }

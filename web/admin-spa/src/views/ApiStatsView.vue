@@ -16,7 +16,9 @@
               ? 'API Key 使用统计'
               : currentTab === 'quota'
                 ? '额度卡'
-                : '使用教程'
+                : currentTab === 'shop'
+                  ? '购买渠道'
+                  : '使用教程'
           "
           :title="oemSettings.siteName + ' · 售后 & 进群加V：ohhhhhhhhb'"
         />
@@ -60,15 +62,13 @@
         <div
           class="inline-flex w-full max-w-2xl flex-wrap justify-center gap-1 rounded-full border border-white/20 bg-white/10 p-1 shadow-lg backdrop-blur-xl sm:w-auto sm:flex-nowrap"
         >
-          <a
-            class="tab-pill-button"
-            href="https://m.tb.cn/h.7NlAqnG?tk=Cl7QUfpgv8c"
-            rel="noopener noreferrer"
-            target="_blank"
+          <button
+            :class="['tab-pill-button', currentTab === 'shop' ? 'active' : '']"
+            @click="currentTab = 'shop'"
           >
             <i class="fas fa-store mr-1 md:mr-2" />
-            <span class="text-sm md:text-base">闲鱼店铺</span>
-          </a>
+            <span class="text-sm md:text-base">购买渠道</span>
+          </button>
           <button
             :class="['tab-pill-button', currentTab === 'stats' ? 'active' : '']"
             @click="currentTab = 'stats'"
@@ -240,6 +240,26 @@
     <div v-if="currentTab === 'tutorial'" class="tab-content">
       <div class="glass-strong rounded-3xl shadow-xl">
         <TutorialView />
+      </div>
+    </div>
+
+    <!-- 闲鱼店铺内容 -->
+    <div v-if="currentTab === 'shop'" class="tab-content">
+      <div class="glass-strong rounded-2xl p-4 shadow-xl sm:rounded-3xl sm:p-6 md:p-8">
+        <div class="flex flex-col items-center">
+          <div class="w-full max-w-sm overflow-hidden rounded-xl">
+            <img alt="闲鱼店铺" class="w-full object-cover" :src="shopImage" />
+          </div>
+          <a
+            class="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 py-2.5 font-medium text-white transition-all hover:from-orange-600 hover:to-red-600"
+            href="https://www.goofish.com/personal?userId=2478927735"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            <i class="fas fa-external-link-alt" />
+            前往闲鱼店铺
+          </a>
+        </div>
       </div>
     </div>
 
@@ -553,6 +573,7 @@ import ModelUsageStats from '@/components/apistats/ModelUsageStats.vue'
 import ServiceCostCards from '@/components/apistats/ServiceCostCards.vue'
 import TutorialView from './TutorialView.vue'
 import UnifiedTestModal from '@/components/common/UnifiedTestModal.vue'
+import shopImage from '@/assets/images/xianyu-shop.jpg'
 
 const route = useRoute()
 const apiStatsStore = useApiStatsStore()
