@@ -1,10 +1,10 @@
 const express = require('express')
-const claudeRelayService = require('../services/claudeRelayService')
-const claudeConsoleRelayService = require('../services/claudeConsoleRelayService')
-const bedrockRelayService = require('../services/bedrockRelayService')
-const ccrRelayService = require('../services/ccrRelayService')
-const bedrockAccountService = require('../services/bedrockAccountService')
-const unifiedClaudeScheduler = require('../services/unifiedClaudeScheduler')
+const claudeRelayService = require('../services/relay/claudeRelayService')
+const claudeConsoleRelayService = require('../services/relay/claudeConsoleRelayService')
+const bedrockRelayService = require('../services/relay/bedrockRelayService')
+const ccrRelayService = require('../services/relay/ccrRelayService')
+const bedrockAccountService = require('../services/account/bedrockAccountService')
+const unifiedClaudeScheduler = require('../services/scheduler/unifiedClaudeScheduler')
 const apiKeyService = require('../services/apiKeyService')
 const { authenticateApiKey } = require('../middleware/auth')
 const logger = require('../utils/logger')
@@ -12,8 +12,8 @@ const { getEffectiveModel, parseVendorPrefixedModel } = require('../utils/modelH
 const sessionHelper = require('../utils/sessionHelper')
 const { updateRateLimitCounters } = require('../utils/rateLimitHelper')
 const claudeRelayConfigService = require('../services/claudeRelayConfigService')
-const claudeAccountService = require('../services/claudeAccountService')
-const claudeConsoleAccountService = require('../services/claudeConsoleAccountService')
+const claudeAccountService = require('../services/account/claudeAccountService')
+const claudeConsoleAccountService = require('../services/account/claudeConsoleAccountService')
 const {
   isWarmupRequest,
   buildMockWarmupResponse,
@@ -468,6 +468,19 @@ async function handleMessagesRequest(req, res) {
                 cache_creation_input_tokens: cacheCreateTokens,
                 cache_read_input_tokens: cacheReadTokens
               }
+              const requestBetaHeader =
+                _headers['anthropic-beta'] ||
+                _headers['Anthropic-Beta'] ||
+                _headers['ANTHROPIC-BETA']
+              if (requestBetaHeader) {
+                usageObject.request_anthropic_beta = requestBetaHeader
+              }
+              if (typeof _requestBody?.speed === 'string' && _requestBody.speed.trim()) {
+                usageObject.request_speed = _requestBody.speed.trim().toLowerCase()
+              }
+              if (typeof usageData.speed === 'string' && usageData.speed.trim()) {
+                usageObject.speed = usageData.speed.trim().toLowerCase()
+              }
 
               // 如果有详细的缓存创建数据，添加到 usage 对象中
               if (ephemeral5mTokens > 0 || ephemeral1hTokens > 0) {
@@ -561,6 +574,22 @@ async function handleMessagesRequest(req, res) {
                 output_tokens: outputTokens,
                 cache_creation_input_tokens: cacheCreateTokens,
                 cache_read_input_tokens: cacheReadTokens
+              }
+              const requestBetaHeader =
+                _headersConsole['anthropic-beta'] ||
+                _headersConsole['Anthropic-Beta'] ||
+                _headersConsole['ANTHROPIC-BETA']
+              if (requestBetaHeader) {
+                usageObject.request_anthropic_beta = requestBetaHeader
+              }
+              if (
+                typeof _requestBodyConsole?.speed === 'string' &&
+                _requestBodyConsole.speed.trim()
+              ) {
+                usageObject.request_speed = _requestBodyConsole.speed.trim().toLowerCase()
+              }
+              if (typeof usageData.speed === 'string' && usageData.speed.trim()) {
+                usageObject.speed = usageData.speed.trim().toLowerCase()
               }
 
               // 如果有详细的缓存创建数据，添加到 usage 对象中
@@ -727,6 +756,19 @@ async function handleMessagesRequest(req, res) {
                 output_tokens: outputTokens,
                 cache_creation_input_tokens: cacheCreateTokens,
                 cache_read_input_tokens: cacheReadTokens
+              }
+              const requestBetaHeader =
+                _headersCcr['anthropic-beta'] ||
+                _headersCcr['Anthropic-Beta'] ||
+                _headersCcr['ANTHROPIC-BETA']
+              if (requestBetaHeader) {
+                usageObject.request_anthropic_beta = requestBetaHeader
+              }
+              if (typeof _requestBodyCcr?.speed === 'string' && _requestBodyCcr.speed.trim()) {
+                usageObject.request_speed = _requestBodyCcr.speed.trim().toLowerCase()
+              }
+              if (typeof usageData.speed === 'string' && usageData.speed.trim()) {
+                usageObject.speed = usageData.speed.trim().toLowerCase()
               }
 
               // 如果有详细的缓存创建数据，添加到 usage 对象中
@@ -1289,8 +1331,8 @@ router.get('/v1/models', authenticateApiKey, async (req, res) => {
         })
       }
 
-      const unifiedGeminiScheduler = require('../services/unifiedGeminiScheduler')
-      const geminiAccountService = require('../services/geminiAccountService')
+      const unifiedGeminiScheduler = require('../services/scheduler/unifiedGeminiScheduler')
+      const geminiAccountService = require('../services/account/geminiAccountService')
 
       let accountSelection
       try {

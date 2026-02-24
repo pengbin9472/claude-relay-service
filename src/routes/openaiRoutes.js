@@ -4,10 +4,10 @@ const router = express.Router()
 const logger = require('../utils/logger')
 const config = require('../../config/config')
 const { authenticateApiKey } = require('../middleware/auth')
-const unifiedOpenAIScheduler = require('../services/unifiedOpenAIScheduler')
-const openaiAccountService = require('../services/openaiAccountService')
-const openaiResponsesAccountService = require('../services/openaiResponsesAccountService')
-const openaiResponsesRelayService = require('../services/openaiResponsesRelayService')
+const unifiedOpenAIScheduler = require('../services/scheduler/unifiedOpenAIScheduler')
+const openaiAccountService = require('../services/account/openaiAccountService')
+const openaiResponsesAccountService = require('../services/account/openaiResponsesAccountService')
+const openaiResponsesRelayService = require('../services/relay/openaiResponsesRelayService')
 const apiKeyService = require('../services/apiKeyService')
 const redis = require('../models/redis')
 const crypto = require('crypto')
@@ -240,11 +240,13 @@ const handleResponses = async (req, res) => {
     }
 
     // 从请求头或请求体中提取会话 ID
+    // NOTE: For some clients, prompt_cache_key is the only stable per-session key.
     const sessionId =
       req.headers['session_id'] ||
       req.headers['x-session-id'] ||
       req.body?.session_id ||
       req.body?.conversation_id ||
+      req.body?.prompt_cache_key ||
       null
 
     sessionHash = sessionId ? crypto.createHash('sha256').update(sessionId).digest('hex') : null
