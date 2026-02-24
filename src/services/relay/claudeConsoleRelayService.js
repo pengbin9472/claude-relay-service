@@ -1500,7 +1500,7 @@ class ClaudeConsoleRelayService {
   }
 
   // 🧪 测试账号连接（供Admin API使用）
-  async testAccountConnection(accountId, responseStream) {
+  async testAccountConnection(accountId, responseStream, model) {
     const { sendStreamTestRequest, createClaudeTestPayload } = require('../../utils/testPayloadHelper')
 
     try {
