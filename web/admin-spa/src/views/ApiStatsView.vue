@@ -243,22 +243,57 @@
       </div>
     </div>
 
-    <!-- 闲鱼店铺内容 -->
+    <!-- 购买渠道内容 -->
     <div v-if="currentTab === 'shop'" class="tab-content">
       <div class="glass-strong rounded-2xl p-4 shadow-xl sm:rounded-3xl sm:p-6 md:p-8">
         <div class="flex flex-col items-center">
-          <div class="w-full max-w-sm overflow-hidden rounded-xl">
-            <img alt="闲鱼店铺" class="w-full object-cover" :src="shopImage" />
-          </div>
-          <a
-            class="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 py-2.5 font-medium text-white transition-all hover:from-orange-600 hover:to-red-600"
-            href="https://www.goofish.com/personal?userId=2478927735"
-            rel="noopener noreferrer"
-            target="_blank"
+          <div
+            class="shop-image-wrapper group relative w-full max-w-sm cursor-pointer overflow-hidden rounded-xl"
+            @click="showShopImagePreview = true"
           >
-            <i class="fas fa-external-link-alt" />
-            前往闲鱼店铺
-          </a>
+            <img
+              alt="购买渠道"
+              class="w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              :src="shopImage"
+            />
+            <div
+              class="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover:bg-black/40"
+            >
+              <span
+                class="flex items-center gap-2 rounded-full bg-white/90 px-4 py-2 text-sm font-medium text-gray-700 opacity-0 shadow-lg transition-all duration-300 group-hover:opacity-100 dark:bg-gray-800/90 dark:text-gray-200"
+              >
+                <i class="fas fa-search-plus" />
+                点击放大
+              </span>
+            </div>
+          </div>
+          <div class="mt-4 w-full max-w-sm">
+            <div
+              class="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-800"
+            >
+              <i class="fas fa-link text-sm text-gray-400" />
+              <span class="min-w-0 flex-1 truncate text-sm text-gray-600 dark:text-gray-300">{{
+                shopUrl
+              }}</span>
+              <button
+                class="flex-shrink-0 rounded-lg px-3 py-1 text-xs font-medium text-white transition-all"
+                :class="shopCopied ? 'bg-green-500' : 'bg-blue-500 hover:bg-blue-600'"
+                @click="copyShopUrl"
+              >
+                <i class="mr-1" :class="shopCopied ? 'fas fa-check' : 'fas fa-copy'" />
+                {{ shopCopied ? '已复制' : '复制链接' }}
+              </button>
+            </div>
+            <a
+              class="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 py-2.5 font-medium text-white transition-all hover:from-orange-600 hover:to-red-600"
+              :href="shopUrl"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <i class="fas fa-external-link-alt" />
+              打开店铺
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -506,6 +541,31 @@
       @close="closeTestModal"
     />
 
+    <!-- 图片预览弹窗 -->
+    <Teleport to="body">
+      <Transition name="fade">
+        <div
+          v-if="showShopImagePreview"
+          class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          @click.self="showShopImagePreview = false"
+        >
+          <div class="relative max-h-[90vh] max-w-[90vw]">
+            <button
+              class="absolute -right-3 -top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white text-gray-600 shadow-lg transition-colors hover:bg-gray-100 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              @click="showShopImagePreview = false"
+            >
+              <i class="fas fa-times" />
+            </button>
+            <img
+              alt="购买渠道"
+              class="max-h-[85vh] max-w-full rounded-xl object-contain shadow-2xl"
+              :src="shopImage"
+            />
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- API Stats 通知弹框 -->
     <Teleport to="body">
       <Transition name="fade">
@@ -581,6 +641,22 @@ const themeStore = useThemeStore()
 
 // 当前标签页
 const currentTab = ref('stats')
+
+// 购买渠道
+const shopUrl = 'https://www.goofish.com/personal?userId=2478927735'
+const shopCopied = ref(false)
+const showShopImagePreview = ref(false)
+const copyShopUrl = async () => {
+  try {
+    await navigator.clipboard.writeText(shopUrl)
+    shopCopied.value = true
+    setTimeout(() => {
+      shopCopied.value = false
+    }, 2000)
+  } catch {
+    showToast('复制失败', 'error')
+  }
+}
 
 // 主题相关
 const isDarkMode = computed(() => themeStore.isDarkMode)
