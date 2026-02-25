@@ -1028,6 +1028,14 @@ class RedisClient {
       return model
     }
 
+    // 处理大写下划线格式的历史数据（如 CLAUDE_SONNET_4_5_20250929_V1_0）
+    if (/^[A-Z][A-Z0-9_]+$/.test(model) && model.startsWith('CLAUDE')) {
+      let normalized = model.toLowerCase().replace(/_/g, '-')
+      // 去掉版本后缀（-v1-0 格式，原始的 v1:0 中冒号被替换为下划线再变成连字符）
+      normalized = normalized.replace(/-v\d+-\d+$/, '')
+      return normalized
+    }
+
     // 对于Bedrock模型，去掉区域前缀进行统一
     if (model.includes('.anthropic.') || model.includes('.claude')) {
       // 匹配所有AWS区域格式：region.anthropic.model-name-v1:0 -> claude-model-name
@@ -1039,7 +1047,14 @@ class RedisClient {
     }
 
     // 对于其他模型，去掉常见的版本后缀
-    return model.replace(/-v\d+:\d+$|:latest$/, '')
+    let result = model.replace(/-v\d+:\d+$|:latest$/, '')
+
+    // 将 Claude 模型别名中的点号统一为连字符: claude-xxx-4.6 -> claude-xxx-4-6
+    if (result.startsWith('claude-')) {
+      result = result.replace(/(\d+)\.(\d+)$/, '$1-$2')
+    }
+
+    return result
   }
 
   async incrementTokenUsage(

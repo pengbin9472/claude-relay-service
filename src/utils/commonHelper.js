@@ -161,6 +161,12 @@ const normalizeModelName = (model) => {
   if (!model || model === 'unknown') {
     return model
   }
+  // 处理大写下划线格式的历史数据（如 CLAUDE_SONNET_4_5_20250929_V1_0）
+  if (/^[A-Z][A-Z0-9_]+$/.test(model) && model.startsWith('CLAUDE')) {
+    let normalized = model.toLowerCase().replace(/_/g, '-')
+    normalized = normalized.replace(/-v\d+-\d+$/, '')
+    return normalized
+  }
   // Bedrock 模型: us-east-1.anthropic.claude-3-5-sonnet-v1:0
   if (model.includes('.anthropic.') || model.includes('.claude')) {
     return model
@@ -168,7 +174,14 @@ const normalizeModelName = (model) => {
       .replace('anthropic.', '')
       .replace(/-v\d+:\d+$/, '')
   }
-  return model.replace(/-v\d+:\d+$|:latest$/, '')
+  let result = model.replace(/-v\d+:\d+$|:latest$/, '')
+
+  // 将 Claude 模型别名中的点号统一为连字符: claude-xxx-4.6 -> claude-xxx-4-6
+  if (result.startsWith('claude-')) {
+    result = result.replace(/(\d+)\.(\d+)$/, '$1-$2')
+  }
+
+  return result
 }
 
 // 规范化端点类型

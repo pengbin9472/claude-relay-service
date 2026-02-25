@@ -2602,7 +2602,7 @@ class ClaudeRelayService {
               output_tokens: totalUsage.output_tokens,
               cache_creation_input_tokens: totalUsage.cache_creation_input_tokens,
               cache_read_input_tokens: totalUsage.cache_read_input_tokens,
-              model: allUsageData[allUsageData.length - 1].model || requestedModel // 使用最后一个模型或请求模型
+              model: allUsageData[allUsageData.length - 1].model || requestedModel // 使用上游返回的模型或请求模型
             }
 
             // 如果有详细的cache_creation数据，合并它们
