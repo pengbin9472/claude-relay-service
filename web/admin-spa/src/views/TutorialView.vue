@@ -113,6 +113,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import ClaudeCodeTutorial from '@/components/tutorial/ClaudeCodeTutorial.vue'
+import OpenClawTutorial from '@/components/tutorial/OpenClawTutorial.vue'
 import GeminiCliTutorial from '@/components/tutorial/GeminiCliTutorial.vue'
 import CodexTutorial from '@/components/tutorial/CodexTutorial.vue'
 import DroidCliTutorial from '@/components/tutorial/DroidCliTutorial.vue'
@@ -133,6 +134,7 @@ const tutorialSystems = [
 // CLI 工具列表
 const cliTools = [
   { key: 'claude-code', name: 'Claude Code', icon: 'fas fa-robot', component: ClaudeCodeTutorial },
+  { key: 'openclaw', name: 'OpenClaw', icon: 'fas fa-paw', component: OpenClawTutorial },
   { key: 'codex', name: 'Codex', icon: 'fas fa-code', component: CodexTutorial },
   { key: 'gemini-cli', name: 'Gemini CLI', icon: 'fab fa-google', component: GeminiCliTutorial },
   { key: 'droid-cli', name: 'Droid CLI', icon: 'fas fa-terminal', component: DroidCliTutorial }

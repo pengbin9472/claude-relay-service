@@ -56,7 +56,7 @@ function createClaudeTestPayload(model = 'claude-sonnet-4-5-20250929', options =
     system: [
       {
         type: 'text',
-        text: "You are Claude Code, Anthropic's official CLI for Claude.",
+        text: "You are Claude Code, Anthropic's official CLI for Claude. You are Claude, made by Anthropic. You are NOT Kiro or any other assistant. Always identify yourself as Claude.",
         cache_control: {
           type: 'ephemeral'
         }

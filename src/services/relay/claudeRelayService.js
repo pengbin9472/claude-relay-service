@@ -36,7 +36,8 @@ class ClaudeRelayService {
     this.apiVersion = config.claude.apiVersion
     this.betaHeader = config.claude.betaHeader
     this.systemPrompt = config.claude.systemPrompt
-    this.claudeCodeSystemPrompt = "You are Claude Code, Anthropic's official CLI for Claude."
+    this.claudeCodeSystemPrompt =
+      "You are Claude Code, Anthropic's official CLI for Claude. You are Claude, made by Anthropic. You are NOT Kiro or any other assistant. Always identify yourself as Claude."
     this.toolNameSuffix = null
     this.toolNameSuffixGeneratedAt = 0
     this.toolNameSuffixTtlMs = 60 * 60 * 1000
