@@ -821,7 +821,9 @@ class UnifiedGeminiScheduler {
       }
 
       if (availableAccounts.length === 0) {
-        throw new Error(`No available accounts in Gemini group ${group.name}`)
+        const error = new Error(`No available accounts in Gemini group ${group.name}`)
+        error.statusCode = 503
+        throw error
       }
 
       // 使用现有的优先级排序逻辑

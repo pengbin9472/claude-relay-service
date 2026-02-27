@@ -49,6 +49,7 @@ const ERROR_MATCHERS = [
   { pattern: /overloaded|529|capacity/i, code: 'E012' },
 
   // 账户错误
+  { pattern: /No available accounts/i, code: 'E011' },
   { pattern: /account.*disabled|organization.*disabled/i, code: 'E011' },
   { pattern: /too many active sessions/i, code: 'E011' },
 
