@@ -7,7 +7,6 @@ const logger = require('../utils/logger')
 const browserFallbackMiddleware = (req, res, next) => {
   const userAgent = req.headers['user-agent'] || ''
   const origin = req.headers['origin'] || ''
-
   const extractHeader = (value) => {
     let candidate = value
 
