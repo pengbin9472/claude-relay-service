@@ -22,6 +22,7 @@ const {
   getHttpsAgentForNonStream,
   getPricingData
 } = require('../../utils/performanceOptimizer')
+const { injectPromptCaching } = require('../../utils/promptCacheInjector')
 
 // structuredClone polyfill for Node < 17
 const safeClone =
@@ -1125,7 +1126,9 @@ class ClaudeRelayService {
     // 移除 x-anthropic-billing-header 系统元素，避免将客户端 billing 标识传递给上游 API
     this._removeBillingHeaderFromSystem(processedBody)
 
-    this._enforceCacheControlLimit(processedBody)
+    if (!config.claude.promptCaching?.enabled) {
+      this._enforceCacheControlLimit(processedBody)
+    }
 
     // 处理原有的系统提示（如果配置了）
     if (this.systemPrompt && this.systemPrompt.trim()) {
@@ -1167,6 +1170,11 @@ class ClaudeRelayService {
     // 处理统一的客户端标识
     if (account && account.useUnifiedClientId === 'true' && account.unifiedClientId) {
       this._replaceClientId(processedBody, account.unifiedClientId)
+    }
+
+    // 自动注入 prompt caching 断点
+    if (config.claude.promptCaching?.enabled) {
+      injectPromptCaching(processedBody)
     }
 
     return processedBody

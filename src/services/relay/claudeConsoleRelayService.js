@@ -4,6 +4,7 @@ const claudeConsoleAccountService = require('../account/claudeConsoleAccountServ
 const redis = require('../../models/redis')
 const logger = require('../../utils/logger')
 const config = require('../../../config/config')
+const { injectPromptCaching } = require('../../utils/promptCacheInjector')
 const {
   sanitizeUpstreamError,
   sanitizeErrorMessage,
@@ -161,6 +162,11 @@ class ClaudeConsoleRelayService {
       const modifiedRequestBody = {
         ...requestBody,
         model: mappedModel
+      }
+
+      // 自动注入 prompt caching 断点
+      if (config.claude.promptCaching?.enabled) {
+        injectPromptCaching(modifiedRequestBody)
       }
 
       // 模型兼容性检查已经在调度器中完成，这里不需要再检查
@@ -669,6 +675,11 @@ class ClaudeConsoleRelayService {
       const modifiedRequestBody = {
         ...requestBody,
         model: mappedModel
+      }
+
+      // 自动注入 prompt caching 断点
+      if (config.claude.promptCaching?.enabled) {
+        injectPromptCaching(modifiedRequestBody)
       }
 
       // 模型兼容性检查已经在调度器中完成，这里不需要再检查
@@ -1501,7 +1512,10 @@ class ClaudeConsoleRelayService {
 
   // 🧪 测试账号连接（供Admin API使用）
   async testAccountConnection(accountId, responseStream, model) {
-    const { sendStreamTestRequest, createClaudeTestPayload } = require('../../utils/testPayloadHelper')
+    const {
+      sendStreamTestRequest,
+      createClaudeTestPayload
+    } = require('../../utils/testPayloadHelper')
 
     try {
       const account = await claudeConsoleAccountService.getAccount(accountId)
