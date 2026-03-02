@@ -212,9 +212,6 @@ class ClaudeConsoleRelayService {
 
       // 过滤客户端请求头
       const filteredHeaders = this._filterClientHeaders(clientHeaders)
-      // 删除 user-agent，UA 通过下面的优先级链单独处理，避免客户端原始 UA 覆盖账户配置
-      delete filteredHeaders['user-agent']
-      delete filteredHeaders['User-Agent']
       logger.debug(`[DEBUG] Filtered client headers: ${JSON.stringify(filteredHeaders)}`)
 
       // 决定使用的 User-Agent：优先使用账户自定义的，否则透传客户端的，最后才使用默认值
@@ -232,8 +229,8 @@ class ClaudeConsoleRelayService {
         headers: {
           'Content-Type': 'application/json',
           'anthropic-version': '2023-06-01',
-          ...filteredHeaders,
-          'User-Agent': userAgent
+          'User-Agent': userAgent,
+          ...filteredHeaders
         },
         timeout: config.requestTimeout || 600000,
         signal: abortController.signal,
@@ -338,13 +335,6 @@ class ClaudeConsoleRelayService {
       // 检查是否为账户禁用/不可用的 400 错误
       const accountDisabledError = isAccountDisabledError(response.status, response.data)
 
-      // 构建错误上下文，用于错误历史记录
-      const errorContext = {
-        model: requestBody.model,
-        apiKeyName: apiKeyData.name,
-        errorBody: typeof response.data === 'string' ? response.data : JSON.stringify(response.data)
-      }
-
       // 检查错误状态并相应处理
       if (response.status === 401) {
         logger.warn(
@@ -352,7 +342,7 @@ class ClaudeConsoleRelayService {
         )
         if (!autoProtectionDisabled) {
           await upstreamErrorHelper
-            .markTempUnavailable(accountId, 'claude-console', 401, null, errorContext)
+            .markTempUnavailable(accountId, 'claude-console', 401)
             .catch(() => {})
         }
       } else if (accountDisabledError) {
@@ -381,8 +371,7 @@ class ClaudeConsoleRelayService {
               accountId,
               'claude-console',
               429,
-              upstreamErrorHelper.parseRetryAfter(response.headers),
-              errorContext
+              upstreamErrorHelper.parseRetryAfter(response.headers)
             )
             .catch(() => {})
         }
@@ -393,7 +382,7 @@ class ClaudeConsoleRelayService {
         if (!autoProtectionDisabled) {
           await claudeConsoleAccountService.markAccountOverloaded(accountId)
           await upstreamErrorHelper
-            .markTempUnavailable(accountId, 'claude-console', 529, null, errorContext)
+            .markTempUnavailable(accountId, 'claude-console', 529)
             .catch(() => {})
         }
       } else if (response.status >= 500) {
@@ -402,7 +391,7 @@ class ClaudeConsoleRelayService {
         )
         if (!autoProtectionDisabled) {
           await upstreamErrorHelper
-            .markTempUnavailable(accountId, 'claude-console', response.status, null, errorContext)
+            .markTempUnavailable(accountId, 'claude-console', response.status)
             .catch(() => {})
         }
       } else if (response.status === 403) {
@@ -808,9 +797,6 @@ class ClaudeConsoleRelayService {
 
       // 过滤客户端请求头
       const filteredHeaders = this._filterClientHeaders(clientHeaders)
-      // 删除 user-agent，UA 通过下面的优先级链单独处理，避免客户端原始 UA 覆盖账户配置
-      delete filteredHeaders['user-agent']
-      delete filteredHeaders['User-Agent']
       logger.debug(`[DEBUG] Filtered client headers: ${JSON.stringify(filteredHeaders)}`)
 
       // 决定使用的 User-Agent：优先使用账户自定义的，否则透传客户端的，最后才使用默认值
@@ -828,8 +814,8 @@ class ClaudeConsoleRelayService {
         headers: {
           'Content-Type': 'application/json',
           'anthropic-version': '2023-06-01',
-          ...filteredHeaders,
-          'User-Agent': userAgent
+          'User-Agent': userAgent,
+          ...filteredHeaders
         },
         timeout: config.requestTimeout || 600000,
         responseType: 'stream',
@@ -890,13 +876,6 @@ class ClaudeConsoleRelayService {
                 `📝 [Stream] Upstream error response from ${account?.name || accountId}: ${errorDataForCheck.substring(0, 500)}`
               )
 
-              // 构建流式错误上下文
-              const streamErrorContext = {
-                model: body.model,
-                apiKeyName: account?.name,
-                errorBody: errorDataForCheck
-              }
-
               // 检查是否为账户禁用错误
               const accountDisabledError = isAccountDisabledError(
                 response.status,
@@ -909,7 +888,7 @@ class ClaudeConsoleRelayService {
                 )
                 if (!autoProtectionDisabled) {
                   await upstreamErrorHelper
-                    .markTempUnavailable(accountId, 'claude-console', 401, null, streamErrorContext)
+                    .markTempUnavailable(accountId, 'claude-console', 401)
                     .catch(() => {})
                 }
               } else if (accountDisabledError) {
@@ -938,8 +917,7 @@ class ClaudeConsoleRelayService {
                       accountId,
                       'claude-console',
                       429,
-                      upstreamErrorHelper.parseRetryAfter(response.headers),
-                      streamErrorContext
+                      upstreamErrorHelper.parseRetryAfter(response.headers)
                     )
                     .catch(() => {})
                 }
@@ -950,7 +928,7 @@ class ClaudeConsoleRelayService {
                 if (!autoProtectionDisabled) {
                   await claudeConsoleAccountService.markAccountOverloaded(accountId)
                   await upstreamErrorHelper
-                    .markTempUnavailable(accountId, 'claude-console', 529, null, streamErrorContext)
+                    .markTempUnavailable(accountId, 'claude-console', 529)
                     .catch(() => {})
                 }
               } else if (response.status >= 500) {
@@ -959,13 +937,7 @@ class ClaudeConsoleRelayService {
                 )
                 if (!autoProtectionDisabled) {
                   await upstreamErrorHelper
-                    .markTempUnavailable(
-                      accountId,
-                      'claude-console',
-                      response.status,
-                      null,
-                      streamErrorContext
-                    )
+                    .markTempUnavailable(accountId, 'claude-console', response.status)
                     .catch(() => {})
                 }
               } else if (response.status === 403) {
@@ -1377,19 +1349,10 @@ class ClaudeConsoleRelayService {
           if (error.response) {
             const catchAutoProtectionDisabled =
               account?.disableAutoProtection === true || account?.disableAutoProtection === 'true'
-            const catchErrorContext = {
-              model: body.model,
-              apiKeyName: account?.name,
-              errorBody: error.response.data
-                ? typeof error.response.data === 'string'
-                  ? error.response.data
-                  : JSON.stringify(error.response.data)
-                : error.message
-            }
             if (error.response.status === 401) {
               if (!catchAutoProtectionDisabled) {
                 upstreamErrorHelper
-                  .markTempUnavailable(accountId, 'claude-console', 401, null, catchErrorContext)
+                  .markTempUnavailable(accountId, 'claude-console', 401)
                   .catch(() => {})
               }
             } else if (error.response.status === 429) {
@@ -1404,8 +1367,7 @@ class ClaudeConsoleRelayService {
                     accountId,
                     'claude-console',
                     429,
-                    upstreamErrorHelper.parseRetryAfter(error.response.headers),
-                    catchErrorContext
+                    upstreamErrorHelper.parseRetryAfter(error.response.headers)
                   )
                   .catch(() => {})
               }
@@ -1413,7 +1375,7 @@ class ClaudeConsoleRelayService {
               if (!catchAutoProtectionDisabled) {
                 claudeConsoleAccountService.markAccountOverloaded(accountId)
                 upstreamErrorHelper
-                  .markTempUnavailable(accountId, 'claude-console', 529, null, catchErrorContext)
+                  .markTempUnavailable(accountId, 'claude-console', 529)
                   .catch(() => {})
               }
             }

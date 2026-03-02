@@ -9,19 +9,25 @@ function countBreakpoints(body) {
   let count = 0
   if (Array.isArray(body.system)) {
     for (const block of body.system) {
-      if (block?.cache_control) count++
+      if (block?.cache_control) {
+        count++
+      }
     }
   }
   if (Array.isArray(body.tools)) {
     for (const tool of body.tools) {
-      if (tool?.cache_control) count++
+      if (tool?.cache_control) {
+        count++
+      }
     }
   }
   if (Array.isArray(body.messages)) {
     for (const msg of body.messages) {
       if (Array.isArray(msg.content)) {
         for (const block of msg.content) {
-          if (block?.cache_control) count++
+          if (block?.cache_control) {
+            count++
+          }
         }
       }
     }

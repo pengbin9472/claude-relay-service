@@ -101,16 +101,7 @@
                 </span>
               </div>
 
-              <!-- 错误消息摘要 -->
-              <div
-                v-if="extractErrorMessage(item.context?.errorBody)"
-                class="mt-2 rounded bg-red-50/80 px-2.5 py-1.5 text-xs text-red-700 dark:bg-red-500/10 dark:text-red-300"
-              >
-                <i class="fas fa-info-circle mr-1 opacity-60" />
-                {{ extractErrorMessage(item.context?.errorBody) }}
-              </div>
-
-              <!-- 可折叠完整错误详情 -->
+              <!-- 可折叠错误详情 -->
               <div v-if="item.context?.errorBody" class="mt-2">
                 <button
                   class="text-xs text-blue-500 hover:text-blue-600 dark:text-blue-400"
@@ -219,21 +210,6 @@ const toggleDetail = (idx) => {
 }
 
 const formatTime = (time) => dayjs(time).format('YYYY-MM-DD HH:mm:ss')
-
-const extractErrorMessage = (errorBody) => {
-  if (!errorBody) return ''
-  const MAX_LEN = 120
-  const truncate = (s) => (s.length > MAX_LEN ? s.slice(0, MAX_LEN) + '...' : s)
-  try {
-    const parsed = typeof errorBody === 'string' ? JSON.parse(errorBody) : errorBody
-    if (parsed?.error?.message) return truncate(parsed.error.message)
-    if (parsed?.message) return truncate(parsed.message)
-    if (typeof parsed === 'string') return truncate(parsed)
-  } catch {
-    if (typeof errorBody === 'string') return truncate(errorBody)
-  }
-  return ''
-}
 
 const formatBody = (body) => {
   if (typeof body === 'string') {
